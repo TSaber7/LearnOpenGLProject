@@ -6,15 +6,31 @@
 #include <iostream>
 
 #include "Shader.h"
+#include "Camera.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
 float alpha = 0;
 int screenWidth = 800, screenHeight = 600;
+
+//创建相机类
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+float deltaTime = 0.0f; // 当前帧与上一帧的时间差
+float lastFrame = 0.0f; // 上一帧的时间
+
+//追踪光标上一帧位置,初始在屏幕中央
+float lastX = screenWidth/2, lastY = screenHeight/2;
+
+//防止刚进入窗口时鼠标位置的剧烈变化
+bool firstMouse = true;
+
 int main()
 {    
 
@@ -45,9 +61,19 @@ int main()
     //设置视口
     glViewport(0, 0, 800, 600);
 
-    //注册回调函数，窗口大小变化时调用
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    //注册回调函数
 
+    //窗口大小变化时调用
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    //鼠标移动时调用
+    glfwSetCursorPosCallback(window, mouse_callback);
+    //鼠标滚轮
+    glfwSetScrollCallback(window, scroll_callback);
+
+    //捕捉光标
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    
+    //创建Shader类
     Shader ourShader("Shaders/shader.vs","Shaders/shader.fs");
 
     //定义顶点数据
@@ -213,8 +239,8 @@ int main()
         ourShader.setInt("texture2", 1);
         ourShader.setFloat("alpha", alpha);
        
+        //设置MVP矩阵
         glm::mat4 model;       
-
         glm::vec3 cubePositions[] = {
           glm::vec3(0.0f,  0.0f,  0.0f),
           glm::vec3(2.0f,  5.0f, -15.0f),
@@ -227,14 +253,13 @@ int main()
           glm::vec3(1.5f,  0.2f, -1.5f),
           glm::vec3(-1.3f,  1.0f, -1.5f)
         };
-
-        glm::mat4 view;
-        // 注意，我们将矩阵向我们要进行移动场景的反方向移动。
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f*sin(glfwGetTime())));
+        //设置观察矩阵
+        glm::mat4 view;     
+        view = camera.GetViewMatrix();
         ourShader.setMatrix("view", view);
-
+        //设置投影矩阵
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), (float)screenWidth / screenHeight, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / screenHeight, 0.1f, 100.0f);
         ourShader.setMatrix("projection", projection);
 
         //线框模式
@@ -262,6 +287,11 @@ int main()
         glfwPollEvents();
         //双缓冲交换
         glfwSwapBuffers(window);
+        //追踪每帧渲染时间
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        //std::cout << "每帧渲染时间" << deltaTime << std::endl;
     }
 
     glfwTerminate();
@@ -274,6 +304,30 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    
+    if (firstMouse) // 这个bool变量初始时是设定为true的
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // 注意这里y坐标是相反的
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.ProcessMouseScroll(yoffset);
+}
+
+
+
 void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -284,4 +338,12 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
         alpha -= 0.1f;
     }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
 }
