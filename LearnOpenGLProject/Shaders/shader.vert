@@ -25,4 +25,5 @@ void main()
     TexCoord = aTexCoord;
     Normal = mat3(transpose(inverse(view*model))) * aNormal;
     FragPos = vec3(view*model * vec4(aPos, 1.0));
+
 }

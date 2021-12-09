@@ -74,7 +74,7 @@ int main()
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     //创建Shader类
-    Shader ourShader("Shaders/shader.vert","Shaders/shader.frag");
+    Shader lightingShader("Shaders/shader.vert","Shaders/shader.frag");
     Shader lightShader("light.vert", "light.frag");
 
     //定义顶点数据
@@ -246,12 +246,12 @@ int main()
         glBindVertexArray(VAO);
 
         //设置当前着色器程序
-        ourShader.use();
+        lightingShader.use();
 
         //更新Uniform
-        ourShader.setInt("texture1", 0);
-        ourShader.setInt("texture2", 1);
-        ourShader.setFloat("alpha", alpha);
+        lightingShader.setInt("texture1", 0);
+        lightingShader.setInt("texture2", 1);
+        lightingShader.setFloat("alpha", alpha);
        
         //设置MVP矩阵
         //设置模型矩阵
@@ -277,11 +277,11 @@ int main()
         //设置观察矩阵
         glm::mat4 view;     
         view = camera.GetViewMatrix();
-        ourShader.setMatrix("view", view);
+        lightingShader.setMatrix("view", view);
         //设置投影矩阵
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / screenHeight, 0.1f, 100.0f);
-        ourShader.setMatrix("projection", projection);
+        lightingShader.setMatrix("projection", projection);
 
         //线框模式
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -293,10 +293,25 @@ int main()
             model = glm::translate(model, cubePositions[i]);
             float angle = 20.0f * i;
             model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            ourShader.setMatrix("model", model);
-            ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-            ourShader.setVec3("lightPos", view * glm::vec4(lightPos, 0.0f));
-            ourShader.setVec3("viewPos", camera.Position); 
+            lightingShader.setMatrix("model", model);
+            lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+            lightingShader.setVec3("lightPos", view * glm::vec4(lightPos, 0.0f));
+            lightingShader.setVec3("viewPos", camera.Position); 
+            lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+            lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+            lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+            lightingShader.setFloat("material.shininess", 32.0f);
+
+            glm::vec3 lightColor;
+            lightColor.x = sin(glfwGetTime() * 2.0f);
+            lightColor.y = sin(glfwGetTime() * 0.7f);
+            lightColor.z = sin(glfwGetTime() * 1.3f);
+
+            glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // 降低影响
+            glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // 很低的影响
+            lightingShader.setVec3("light.ambient", ambientColor);
+            lightingShader.setVec3("light.diffuse", diffuseColor); // 将光照调暗了一些以搭配场景
+            lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
