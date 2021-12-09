@@ -74,51 +74,52 @@ int main()
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     //创建Shader类
-    Shader ourShader("Shaders/shader.vs","Shaders/shader.fs");
+    Shader ourShader("Shaders/shader.vert","Shaders/shader.frag");
+    Shader lightShader("light.vert", "light.frag");
 
     //定义顶点数据
 	float vertices[] = {
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-	     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,0.0f,  0.0f, -1.0f,
+	     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,0.0f,  0.0f, -1.0f,
+	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,  0.0f, -1.0f,
+	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,  0.0f, -1.0f,
+	    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  0.0f, -1.0f,
+	    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,0.0f,  0.0f, -1.0f,
 
-	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,  0.0f, 1.0f,
+	     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,  0.0f, 1.0f,
+	     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,0.0f,  0.0f, 1.0f,
+	     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,0.0f,  0.0f, 1.0f,
+	    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,0.0f,  0.0f, 1.0f,
+	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,  0.0f, 1.0f,
 
-	    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,-1.0f,  0.0f,  0.0f,
+	    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,-1.0f,  0.0f,  0.0f,
+	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,-1.0f,  0.0f,  0.0f,
+	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,-1.0f,  0.0f,  0.0f,
+	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,-1.0f,  0.0f,  0.0f,
+	    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,-1.0f,  0.0f,  0.0f,
 
-	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,1.0f,  0.0f,  0.0f,
+	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,1.0f,  0.0f,  0.0f,
+	     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,1.0f,  0.0f,  0.0f,
+	     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,1.0f,  0.0f,  0.0f,
+	     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f,  0.0f,  0.0f,
+	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,1.0f,  0.0f,  0.0f,
 
-	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-	     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f, -1.0f,  0.0f,
+	     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,0.0f, -1.0f,  0.0f,
+	     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f, -1.0f,  0.0f,
+	     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f, -1.0f,  0.0f,
+	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f, -1.0f,  0.0f,
+	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f, -1.0f,  0.0f,
 
-	    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-	    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+	    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  1.0f,  0.0f,
+	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,  1.0f,  0.0f,
+	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,  1.0f,  0.0f,
+	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,  1.0f,  0.0f,
+	    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,0.0f,  1.0f,  0.0f,
+	    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  1.0f,  0.0f
 	};
 
     //定义索引数据
@@ -148,21 +149,34 @@ int main()
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
+    
     //链接顶点属性的配置并启用属性，这将被记录到VAO
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
     //glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+    glEnableVertexAttribArray(3);
 
     //记录完成，先解绑VAO，因为VAO会记录EBO的绑定信息
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    //绑定灯立方体VAO
+    unsigned int lightVAO;
+    glGenVertexArrays(1, &lightVAO);
+    glBindVertexArray(lightVAO);
+    // 只需要绑定VBO不用再次设置VBO的数据，因为箱子的VBO数据中已经包含了正确的立方体顶点数据
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // 设置灯立方体的顶点属性（对我们的灯来说仅仅只有位置数据）
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
     unsigned int texture1,texture2;
     glGenTextures(1, &texture1);
@@ -225,7 +239,7 @@ int main()
         processInput(window);
         
         //清除颜色缓冲和深度缓冲
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
         //绑定VAO进行渲染
@@ -240,7 +254,13 @@ int main()
         ourShader.setFloat("alpha", alpha);
        
         //设置MVP矩阵
-        glm::mat4 model;       
+        //设置模型矩阵
+        glm::mat4 lightModel;
+        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+        lightModel = glm::mat4();
+        lightModel = glm::translate(lightModel, lightPos);
+        lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+
         glm::vec3 cubePositions[] = {
           glm::vec3(0.0f,  0.0f,  0.0f),
           glm::vec3(2.0f,  5.0f, -15.0f),
@@ -253,6 +273,7 @@ int main()
           glm::vec3(1.5f,  0.2f, -1.5f),
           glm::vec3(-1.3f,  1.0f, -1.5f)
         };
+
         //设置观察矩阵
         glm::mat4 view;     
         view = camera.GetViewMatrix();
@@ -266,16 +287,26 @@ int main()
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         //只使用顶点数据绘制
-        for (unsigned int i = 0; i < 10; i++)
+        for (unsigned int i = 0; i < 1; i++)
         {
             glm::mat4 model;
             model = glm::translate(model, cubePositions[i]);
             float angle = 20.0f * i;
             model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             ourShader.setMatrix("model", model);
-
+            ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+            ourShader.setVec3("lightPos", view * glm::vec4(lightPos, 0.0f));
+            ourShader.setVec3("viewPos", camera.Position); 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
+        // 绘制灯立方体对象
+        lightShader.use();
+        glBindVertexArray(lightVAO);
+        lightShader.setMatrix("view", view);
+        lightShader.setMatrix("model", lightModel);
+        lightShader.setMatrix("projection", projection);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         //使用索引绘制
         //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -346,4 +377,8 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        camera.ProcessKeyboard(DOWN, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        camera.ProcessKeyboard(UP, deltaTime);
 }
