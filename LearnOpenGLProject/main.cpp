@@ -247,7 +247,6 @@ int main()
             float angle = 20.0f * i;
             model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             lightingShader.setMatrix("model", model);
-            lightingShader.setVec3("lightPos", view * glm::vec4(lightPos, 0.0f));
             lightingShader.setVec3("viewPos", camera.Position); 
 
             lightingShader.setInt("material.diffuse", 0);
@@ -257,14 +256,21 @@ int main()
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, specularMap);
             lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-            lightingShader.setFloat("material.shininess", 64.0f);
+            lightingShader.setFloat("material.shininess", 32.0f);
 
-            lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-            lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // 将光照调暗了一些以搭配场景
+            lightingShader.setVec3("light.position", camera.Position);
+            lightingShader.setVec3("light.direction", camera.Front);
+            lightingShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+            lightingShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
+
+            lightingShader.setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+            lightingShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f); 
             lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-            lightingShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
+            //lightingShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
             
-
+            lightingShader.setFloat("light.constant", 1.0f);
+            lightingShader.setFloat("light.linear", 0.09f);
+            lightingShader.setFloat("light.quadratic", 0.032f);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
