@@ -240,7 +240,7 @@ int main()
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         //只使用顶点数据绘制
-        for (unsigned int i = 0; i < 1; i++)
+        for (unsigned int i = 0; i < 10; i++)
         {
             glm::mat4 model;
             model = glm::translate(model, cubePositions[i]);
@@ -262,7 +262,7 @@ int main()
             lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
             lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // 将光照调暗了一些以搭配场景
             lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-
+            lightingShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
             
 
 
