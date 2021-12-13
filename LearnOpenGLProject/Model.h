@@ -28,6 +28,7 @@ private:
     /*  模型数据  */
     vector<Mesh> meshes;
     string directory;
+    vector<Texture> textures_loaded;
     /*  函数   */
     void loadModel(string path) {
         Assimp::Importer import;
@@ -114,11 +115,25 @@ private:
         {
             aiString str;
             mat->GetTexture(type, i, &str);
-            Texture texture;
-            texture.id = TextureFromFile(str.C_Str(), directory);
-            texture.type = typeName;
-            texture.path = str.C_Str();
-            textures.push_back(texture);
+            bool skip = false;
+            for (unsigned int j = 0; j < textures_loaded.size(); j++)
+            {
+                if (std::strcmp(textures_loaded[j].path.data, str.C_Str()) == 0)
+                {
+                    textures.push_back(textures_loaded[j]);
+                    skip = true;
+                    break;
+                }
+            }
+            if (!skip)
+            {   // 如果纹理还没有被加载，则加载它
+                Texture texture;
+                texture.id = TextureFromFile(str.C_Str(), directory);
+                texture.type = typeName;
+                texture.path = str.C_Str();
+                textures.push_back(texture);
+                textures_loaded.push_back(texture); // 添加到已加载的纹理中
+            }
         }
         return textures;
     }

@@ -14,7 +14,7 @@ struct Vertex {
 struct Texture {
     unsigned int id;
     string type;
-    string path;
+    aiString path;
 };
 
 class Mesh {
