@@ -61,5 +61,11 @@
     <None Include="light.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\shaderSingleColor.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\shaderSingleColor.vert">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

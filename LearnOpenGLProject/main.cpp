@@ -79,11 +79,9 @@ int main()
     //创建Shader类
     Shader lightingShader("Shaders/shader.vert","Shaders/shader.frag");
     Shader lightShader("light.vert", "light.frag");
+    Shader shaderSingleColor("Shaders/shaderSingleColor.vert", "Shaders/shaderSingleColor.frag");
 
     Model ourModel("Objects/nanosuit.obj");
-
-    //启用深度测试
-    glEnable(GL_DEPTH_TEST);
 
     //渲染循环
     while (!glfwWindowShouldClose(window))
@@ -96,33 +94,54 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		
 
         //设置当前着色器程序
-        lightingShader.use();
-
-        //更新Uniform
-        lightingShader.setInt("texture1", 0);
-        lightingShader.setInt("texture2", 1);
+        //lightingShader.use();
 
         //设置MVP矩阵
         //设置模型矩阵
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-        lightingShader.setMat4("model", model);
-        ourModel.Draw(lightingShader);
+        
 
         //设置观察矩阵
         glm::mat4 view;     
         view = camera.GetViewMatrix();
-        lightingShader.setMat4("view", view);
+        
         //设置投影矩阵
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / screenHeight, 0.1f, 100.0f);
-        lightingShader.setMat4("projection", projection);
+        
 
         //线框模式
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+        glEnable(GL_STENCIL_TEST);
+        glEnable(GL_DEPTH_TEST);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
+        lightingShader.use();
+        lightingShader.setMat4("model", model);
+        lightingShader.setMat4("view", view);
+        lightingShader.setMat4("projection", projection);
         ourModel.Draw(lightingShader);
+
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+        glDisable(GL_DEPTH_TEST);
+        shaderSingleColor.use();
+        model = glm::scale(model, glm::vec3(1.01f, 1.01f, 1.01f));
+        shaderSingleColor.setMat4("model", model);
+        shaderSingleColor.setMat4("view", view);
+        shaderSingleColor.setMat4("projection", projection);
+        ourModel.Draw(shaderSingleColor);
+        glStencilMask(0xFF);
+        glEnable(GL_DEPTH_TEST);
+
+        
 
         //使用索引绘制
         //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

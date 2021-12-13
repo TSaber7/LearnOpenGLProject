@@ -2,7 +2,6 @@
 out vec4 FragColor;
 
 in vec3 ourColor;
-//in vec3 vPos;
 in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
@@ -46,6 +45,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 void main()
 {
     FragColor = texture(texture_diffuse1, TexCoords);
+    //FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
     //FragColor = vec4(1.0,1.0,1.0, 1.0);
 //    //  Ù–‘
 //    vec3 norm = normalize(Normal);
