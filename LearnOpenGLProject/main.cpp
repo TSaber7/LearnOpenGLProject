@@ -7,6 +7,8 @@
 
 #include "Shader.h"
 #include "Camera.h"
+#include "Model.h"
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -78,111 +80,7 @@ int main()
     Shader lightingShader("Shaders/shader.vert","Shaders/shader.frag");
     Shader lightShader("light.vert", "light.frag");
 
-    //定义顶点数据
-	float vertices[] = {
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,0.0f,  0.0f, -1.0f,
-	     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,0.0f,  0.0f, -1.0f,
-	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,  0.0f, -1.0f,
-	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,  0.0f, -1.0f,
-	    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  0.0f, -1.0f,
-	    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,0.0f,  0.0f, -1.0f,
-
-	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,  0.0f, 1.0f,
-	     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,  0.0f, 1.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,0.0f,  0.0f, 1.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,0.0f,  0.0f, 1.0f,
-	    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,0.0f,  0.0f, 1.0f,
-	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,  0.0f, 1.0f,
-
-	    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,-1.0f,  0.0f,  0.0f,
-	    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,-1.0f,  0.0f,  0.0f,
-	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,-1.0f,  0.0f,  0.0f,
-	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,-1.0f,  0.0f,  0.0f,
-	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,-1.0f,  0.0f,  0.0f,
-	    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,-1.0f,  0.0f,  0.0f,
-
-	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,1.0f,  0.0f,  0.0f,
-	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,1.0f,  0.0f,  0.0f,
-	     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,1.0f,  0.0f,  0.0f,
-	     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,1.0f,  0.0f,  0.0f,
-	     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f,  0.0f,  0.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,1.0f,  0.0f,  0.0f,
-
-	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f, -1.0f,  0.0f,
-	     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,0.0f, -1.0f,  0.0f,
-	     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f, -1.0f,  0.0f,
-	     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f, -1.0f,  0.0f,
-	    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f, -1.0f,  0.0f,
-	    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f, -1.0f,  0.0f,
-
-	    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  1.0f,  0.0f,
-	     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,  1.0f,  0.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,  1.0f,  0.0f,
-	     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,  1.0f,  0.0f,
-	    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,0.0f,  1.0f,  0.0f,
-	    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  1.0f,  0.0f
-	};
-
-    
-
-    //定义索引数据
-    unsigned int indices[] = { // 注意索引从0开始! 
-        0, 1, 2, // 第一个三角形
-        2,3,0,
-
-    };
-
-    //创建VBO、VAO、EBO
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
-
-
-    //绑定VAO进行记录
-    glBindVertexArray(VAO);
-
-    //绑定VBO、EBO并复制顶点数据到VBO,索引数据到EBO
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    
-    //链接顶点属性的配置并启用属性，这将被记录到VAO
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
-    //glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    //记录完成，先解绑VAO，因为VAO会记录EBO的绑定信息
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    //绑定灯立方体VAO
-    unsigned int lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-    // 只需要绑定VBO不用再次设置VBO的数据，因为箱子的VBO数据中已经包含了正确的立方体顶点数据
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // 设置灯立方体的顶点属性（对我们的灯来说仅仅只有位置数据）
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    unsigned int diffuseMap = loadTexture("Textures/container2.png");
-    unsigned int specularMap = loadTexture("Textures/container2_specular.png");
+    Model ourModel("Objects/nanosuit.obj");
 
     //启用深度测试
     glEnable(GL_DEPTH_TEST);
@@ -195,10 +93,7 @@ int main()
         
         //清除颜色缓冲和深度缓冲
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-        //绑定VAO进行渲染
-        glBindVertexArray(VAO);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		
 
         //设置当前着色器程序
         lightingShader.use();
@@ -206,35 +101,14 @@ int main()
         //更新Uniform
         lightingShader.setInt("texture1", 0);
         lightingShader.setInt("texture2", 1);
-        lightingShader.setFloat("alpha", alpha);
-       
+
         //设置MVP矩阵
         //设置模型矩阵
-        glm::mat4 lightModel;
-        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-        lightModel = glm::mat4();
-        lightModel = glm::translate(lightModel, lightPos);
-        lightModel = glm::scale(lightModel, glm::vec3(0.2f));
-
-        glm::vec3 cubePositions[] = {
-          glm::vec3(0.0f,  0.0f,  0.0f),
-          glm::vec3(2.0f,  5.0f, -15.0f),
-          glm::vec3(-1.5f, -2.2f, -2.5f),
-          glm::vec3(-3.8f, -2.0f, -12.3f),
-          glm::vec3(2.4f, -0.4f, -3.5f),
-          glm::vec3(-1.7f,  3.0f, -7.5f),
-          glm::vec3(1.3f, -2.0f, -2.5f),
-          glm::vec3(1.5f,  2.0f, -2.5f),
-          glm::vec3(1.5f,  0.2f, -1.5f),
-          glm::vec3(-1.3f,  1.0f, -1.5f)
-        };
-
-        glm::vec3 pointLightPositions[] = {
-        glm::vec3(0.7f,  0.2f,  2.0f),
-        glm::vec3(2.3f, -3.3f, -4.0f),
-        glm::vec3(-4.0f,  2.0f, -12.0f),
-        glm::vec3(0.0f,  0.0f, -3.0f)
-        };
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        lightingShader.setMat4("model", model);
+        ourModel.Draw(lightingShader);
 
         //设置观察矩阵
         glm::mat4 view;     
@@ -248,81 +122,7 @@ int main()
         //线框模式
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        //只使用顶点数据绘制
-        for (unsigned int i = 0; i < 10; i++)
-        {
-            glm::mat4 model;
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            lightingShader.setMat4("model", model);
-            lightingShader.setVec3("viewPos", camera.Position); 
-
-            lightingShader.setInt("material.diffuse", 0);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, diffuseMap);
-            lightingShader.setInt("material.specular", 1);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, specularMap);
-            lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-            lightingShader.setFloat("material.shininess", 32.0f);
-
-            // directional light
-            lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-            lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-            lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-            lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-            // point light 1
-            lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);
-            lightingShader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
-            lightingShader.setVec3("pointLights[0].diffuse", 0.8f, 0.0f, 0.0f);
-            lightingShader.setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
-            lightingShader.setFloat("pointLights[0].constant", 1.0f);
-            lightingShader.setFloat("pointLights[0].linear", 0.09);
-            lightingShader.setFloat("pointLights[0].quadratic", 0.032);
-            // point light 2
-            lightingShader.setVec3("pointLights[1].position", pointLightPositions[1]);
-            lightingShader.setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
-            lightingShader.setVec3("pointLights[1].diffuse", 0.0f, 0.8f, 0.0f);
-            lightingShader.setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
-            lightingShader.setFloat("pointLights[1].constant", 1.0f);
-            lightingShader.setFloat("pointLights[1].linear", 0.09);
-            lightingShader.setFloat("pointLights[1].quadratic", 0.032);
-            // point light 3
-            lightingShader.setVec3("pointLights[2].position", pointLightPositions[2]);
-            lightingShader.setVec3("pointLights[2].ambient", 0.05f, 0.05f, 0.05f);
-            lightingShader.setVec3("pointLights[2].diffuse", 0.0f, 0.0f, 0.8f);
-            lightingShader.setVec3("pointLights[2].specular", 1.0f, 1.0f, 1.0f);
-            lightingShader.setFloat("pointLights[2].constant", 1.0f);
-            lightingShader.setFloat("pointLights[2].linear", 0.09);
-            lightingShader.setFloat("pointLights[2].quadratic", 0.032);
-            // point light 4
-            lightingShader.setVec3("pointLights[3].position", pointLightPositions[3]);
-            lightingShader.setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
-            lightingShader.setVec3("pointLights[3].diffuse", 0.8f, 0.0f, 0.0f);
-            lightingShader.setVec3("pointLights[3].specular", 1.0f, 1.0f, 1.0f);
-            lightingShader.setFloat("pointLights[3].constant", 1.0f);
-            lightingShader.setFloat("pointLights[3].linear", 0.09);
-            lightingShader.setFloat("pointLights[3].quadratic", 0.032);
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-
-        // 绘制灯立方体对象
-        lightShader.use();
-        glBindVertexArray(lightVAO);
-        lightShader.setMat4("view", view);
-        lightShader.setMat4("model", lightModel);
-        lightShader.setMat4("projection", projection);
-        for (unsigned int i = 0; i < 4; i++)
-        {
-            lightModel = glm::mat4(1.0f);
-            lightModel = glm::translate(lightModel, pointLightPositions[i]);
-            lightModel = glm::scale(lightModel, glm::vec3(0.2f)); // Make it a smaller cube
-            lightShader.setMat4("model", lightModel);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        ourModel.Draw(lightingShader);
 
         //使用索引绘制
         //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
