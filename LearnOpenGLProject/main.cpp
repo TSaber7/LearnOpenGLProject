@@ -252,15 +252,17 @@ int main()
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
         
-
+        //渲染模型
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
         glStencilMask(0xFF);
         lightingShader.use();
         lightingShader.setMat4("model", model);
         lightingShader.setMat4("view", view);
         lightingShader.setMat4("projection", projection);
+        lightingShader.setVec3("cameraPos",camera.Position );
         ourModel.Draw(lightingShader);
 
+        //利用模板渲染物体边缘
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
         glStencilMask(0x00);
         glDisable(GL_DEPTH_TEST);

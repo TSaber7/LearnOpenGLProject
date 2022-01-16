@@ -1,12 +1,14 @@
 #version 330 core
 out vec4 FragColor;
 
-in vec3 ourColor;
 in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
 
 uniform sampler2D texture_diffuse1;
+uniform vec3 cameraPos;
+uniform samplerCube skybox;
+
 struct Material {
     sampler2D diffuse;
     sampler2D specular;
@@ -45,6 +47,11 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 void main()
 {
     FragColor = texture(texture_diffuse1, TexCoords);
+
+    vec3 I = normalize(FragPos - cameraPos);
+    vec3 R = reflect(I, normalize(Normal));
+    FragColor = vec4(texture(skybox, R).rgb, 1.0);
+
     //FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
     //FragColor = vec4(1.0,1.0,1.0, 1.0);
 //    //  Ù–‘
