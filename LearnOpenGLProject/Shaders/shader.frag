@@ -46,10 +46,16 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 void main()
 {
+    
     FragColor = texture(texture_diffuse1, TexCoords);
 
+    //根据反射方向采集天空盒
     vec3 I = normalize(FragPos - cameraPos);
     vec3 R = reflect(I, normalize(Normal));
+    FragColor = vec4(texture(skybox, R).rgb, 1.0);
+    //根据折射方向采集天空盒
+    float ratio = 1.00 / 1.52;
+    R = refract(I, normalize(Normal), ratio);
     FragColor = vec4(texture(skybox, R).rgb, 1.0);
 
     //FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
