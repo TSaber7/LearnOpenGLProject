@@ -9,6 +9,7 @@ const float offset = 1.0 / 300.0;
 
 void main()
 {
+    /*模糊后处理
     vec2 offsets[9] = vec2[](
         vec2(-offset,  offset), // 左上
         vec2( 0.0f,    offset), // 正上
@@ -37,4 +38,6 @@ void main()
         col += sampleTex[i] * kernel[i];
 
     FragColor = vec4(col, 1.0);
+    */
+    FragColor=texture(screenTexture,TexCoords);
 }

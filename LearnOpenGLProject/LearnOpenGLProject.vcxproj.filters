@@ -73,5 +73,7 @@
     <None Include="Shaders\screenShader.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\skybox.vert" />
+    <None Include="Shaders\skybox.frag" />
   </ItemGroup>
 </Project>
