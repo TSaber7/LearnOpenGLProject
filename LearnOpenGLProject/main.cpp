@@ -221,9 +221,9 @@ int main()
         glEnable(GL_DEPTH_TEST);   
 
 
-        //清除颜色缓冲和深度缓冲
+        //清除颜色缓冲,深度缓冲,模板缓冲
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         //设置当前着色器程序
         //lightingShader.use();
@@ -246,23 +246,6 @@ int main()
 
         //线框模式
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        //渲染天空盒
-        glDepthMask(GL_FALSE);
-        skyboxShader.use();
-        // ... 设置观察和投影矩阵
-        glm::mat4 viewRot = glm::mat4(glm::mat3(view));
-        skyboxShader.setMat4("view", viewRot);
-        skyboxShader.setMat4("projection", projection);
-
-        glBindVertexArray(skyboxVAO);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glDepthMask(GL_TRUE);
-        // ... 绘制剩下的场景
-        
         
         glEnable(GL_STENCIL_TEST);
         glEnable(GL_DEPTH_TEST);
@@ -289,6 +272,20 @@ int main()
         ourModel.Draw(shaderSingleColor);
         glStencilMask(0xFF);
         glEnable(GL_DEPTH_TEST);
+
+        //最后渲染天空盒便于深度测试中被丢弃
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_FALSE);
+        skyboxShader.use();
+        // ... 设置观察和投影矩阵
+        glm::mat4 viewRot = glm::mat4(glm::mat3(view));
+        skyboxShader.setMat4("view", viewRot);
+        skyboxShader.setMat4("projection", projection);
+
+        glBindVertexArray(skyboxVAO);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDepthMask(GL_TRUE);
 
         glDisable(GL_STENCIL_TEST);
 
