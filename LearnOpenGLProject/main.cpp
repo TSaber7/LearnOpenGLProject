@@ -207,6 +207,7 @@ int main()
     };
     unsigned int cubemapTexture = loadCubemap(faces);
 
+    glEnable(GL_PROGRAM_POINT_SIZE);
     //‰÷»æ—≠ª∑
     while (!glfwWindowShouldClose(window))
     {

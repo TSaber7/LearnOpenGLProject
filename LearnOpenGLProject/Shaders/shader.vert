@@ -15,6 +15,7 @@ uniform mat3 normalMat;
 void main()
 {
     gl_Position =projection * view * model *vec4(aPos.x,aPos.y,aPos.z, 1.0);
+    gl_PointSize = gl_Position.z; 
     TexCoords = aTexCoords;
     Normal = mat3(transpose(inverse(model))) * aNormal;
     FragPos = vec3(model * vec4(aPos, 1.0));

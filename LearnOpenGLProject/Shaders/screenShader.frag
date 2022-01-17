@@ -39,5 +39,9 @@ void main()
 
     FragColor = vec4(col, 1.0);
     */
-    FragColor=texture(screenTexture,TexCoords);
+    if(gl_FragCoord.x < 400)
+        FragColor = vec4(1.0, 0.8, 0.8, 1.0);
+    else
+        FragColor = vec4(0.8, 1.0, 0.8, 1.0);  
+    FragColor=FragColor*texture(screenTexture,TexCoords);
 }

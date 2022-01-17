@@ -5,7 +5,7 @@ in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
 
-uniform sampler2D texture_diffuse1;
+
 uniform vec3 cameraPos;
 uniform samplerCube skybox;
 
@@ -13,6 +13,9 @@ struct Material {
     sampler2D diffuse;
     sampler2D specular;
     float shininess;
+
+    sampler2D texture_diffuse1;
+    sampler2D texture_specular1;
 }; 
 
 struct DirLight {
@@ -47,7 +50,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 void main()
 {
     
-    FragColor = texture(texture_diffuse1, TexCoords);
+    FragColor = texture(material.texture_specular1, TexCoords);
 
     //根据反射方向采集天空盒
     vec3 I = normalize(FragPos - cameraPos);
@@ -58,6 +61,7 @@ void main()
     R = refract(I, normalize(Normal), ratio);
     FragColor = vec4(texture(skybox, R).rgb, 1.0);
 
+    FragColor = texture(material.texture_specular1, TexCoords);
     //FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
     //FragColor = vec4(1.0,1.0,1.0, 1.0);
 //    // 属性
