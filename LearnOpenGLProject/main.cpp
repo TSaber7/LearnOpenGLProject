@@ -79,12 +79,18 @@ int main()
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     //创建Shader类
-    Shader lightingShader("Shaders/shader.vert","Shaders/shader.frag");
-    Shader lightShader("Shaders/light.vert", "Shaders/light.frag");
+    Shader modelShader("Shaders/shader.vert","Shaders/shader.frag");
+    //Shader lightShader("Shaders/light.vert", "Shaders/light.frag");
     Shader shaderSingleColor("Shaders/shaderSingleColor.vert", "Shaders/shaderSingleColor.frag");
     Shader screenShader("Shaders/screenShader.vert", "Shaders/screenShader.frag");
     Shader skyboxShader("Shaders/skybox.vert", "Shaders/skybox.frag");
 
+    Shader shaderRed("Shaders/8.advanced_glsl.vs", "Shaders/8.red.fs");
+    Shader shaderGreen("Shaders/8.advanced_glsl.vs", "Shaders/8.green.fs");
+    Shader shaderBlue("Shaders/8.advanced_glsl.vs", "Shaders/8.blue.fs");
+    Shader shaderYellow("Shaders/8.advanced_glsl.vs", "Shaders/8.yellow.fs");
+
+    //模型
     Model ourModel("Objects/nanosuit.obj");
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
@@ -167,6 +173,60 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+    float cubeVertices[] = {
+        // positions         
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+
+        -0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f, -0.5f,
+
+        -0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+    };
+    // cube VAO
+    unsigned int cubeVAO, cubeVBO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &cubeVBO);
+    glBindVertexArray(cubeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
     //创建帧缓冲
     unsigned int framebuffer;
     glGenFramebuffers(1, &framebuffer);
@@ -208,6 +268,29 @@ int main()
     unsigned int cubemapTexture = loadCubemap(faces);
 
     glEnable(GL_PROGRAM_POINT_SIZE);
+
+    //绑定着色器Uniform块到绑定点0
+    unsigned int uniformBlockIndexRed = glGetUniformBlockIndex(shaderRed.ID, "Matrices");
+    unsigned int uniformBlockIndexGreen = glGetUniformBlockIndex(shaderGreen.ID, "Matrices");
+    unsigned int uniformBlockIndexBlue = glGetUniformBlockIndex(shaderBlue.ID, "Matrices");
+    unsigned int uniformBlockIndexYellow = glGetUniformBlockIndex(shaderYellow.ID, "Matrices");
+
+    glUniformBlockBinding(shaderRed.ID, uniformBlockIndexRed, 0);
+    glUniformBlockBinding(shaderGreen.ID, uniformBlockIndexGreen, 0);
+    glUniformBlockBinding(shaderBlue.ID, uniformBlockIndexBlue, 0);
+    glUniformBlockBinding(shaderYellow.ID, uniformBlockIndexYellow, 0);
+
+    //创建Uniform缓冲对象本身，并将其绑定到绑定点0
+    unsigned int uboMatrices;
+    glGenBuffers(1, &uboMatrices);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
+
+    
     //渲染循环
     while (!glfwWindowShouldClose(window))
     {
@@ -239,11 +322,18 @@ int main()
         //设置观察矩阵
         glm::mat4 view;     
         view = camera.GetViewMatrix();
-        
+        //将观察矩阵更新到Uniform缓冲
+        glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
         //设置投影矩阵
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / screenHeight, 0.1f, 100.0f);
-        
+        //将投影矩阵更新到Uniform缓冲
+        glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         //线框模式
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -256,12 +346,42 @@ int main()
         //渲染模型
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
         glStencilMask(0xFF);
-        lightingShader.use();
-        lightingShader.setMat4("model", model);
-        lightingShader.setMat4("view", view);
-        lightingShader.setMat4("projection", projection);
-        lightingShader.setVec3("cameraPos",camera.Position );
-        ourModel.Draw(lightingShader);
+        modelShader.use();
+        modelShader.setMat4("model", model);
+        modelShader.setMat4("view", view);
+        modelShader.setMat4("projection", projection);
+        modelShader.setVec3("cameraPos",camera.Position );
+        ourModel.Draw(modelShader);
+
+        glBindVertexArray(cubeVAO);
+        shaderRed.use();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-0.75f, 0.75f, 0.0f));  // 移动到左上角
+        shaderRed.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        glBindVertexArray(cubeVAO);
+        shaderGreen.use();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.75f, 0.75f, 0.0f));  // 移动到右上角
+        shaderRed.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        glBindVertexArray(cubeVAO);
+        shaderBlue.use();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-0.75f, -0.75f, 0.0f));  // 移动到左下角
+        shaderRed.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        glBindVertexArray(cubeVAO);
+        shaderYellow.use();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.75f, -0.75f, 0.0f));  // 移动到右下角
+        shaderRed.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
 
         //利用模板渲染物体边缘
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
