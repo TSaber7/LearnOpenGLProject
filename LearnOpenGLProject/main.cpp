@@ -90,6 +90,8 @@ int main()
     Shader shaderBlue("Shaders/8.advanced_glsl.vs", "Shaders/8.blue.fs");
     Shader shaderYellow("Shaders/8.advanced_glsl.vs", "Shaders/8.yellow.fs");
 
+    Shader pointShader("Shaders/pointShader.vert", "Shaders/pointShader.frag", "Shaders/pointShader.geom");
+
     //模型
     Model ourModel("Objects/nanosuit.obj");
 
@@ -227,6 +229,23 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+    float points[] = {
+    -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // 左上
+     0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // 右上
+     0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // 右下
+    -0.5f, -0.5f, 1.0f, 1.0f, 0.0f  // 左下
+    };
+    unsigned int pointsVAO, pointsVBO;
+    glGenVertexArrays(1, &pointsVAO);
+    glGenBuffers(1, &pointsVBO);
+    glBindVertexArray(pointsVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, pointsVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(points), &points, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+
     //创建帧缓冲
     unsigned int framebuffer;
     glGenFramebuffers(1, &framebuffer);
@@ -344,44 +363,47 @@ int main()
 
         
         //渲染模型
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
-        modelShader.use();
-        modelShader.setMat4("model", model);
-        modelShader.setMat4("view", view);
-        modelShader.setMat4("projection", projection);
-        modelShader.setVec3("cameraPos",camera.Position );
-        ourModel.Draw(modelShader);
 
-        glBindVertexArray(cubeVAO);
-        shaderRed.use();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.75f, 0.75f, 0.0f));  // 移动到左上角
-        shaderRed.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        //glStencilMask(0xFF);
+        //modelShader.use();
+        //modelShader.setMat4("model", model);
+        //modelShader.setMat4("view", view);
+        //modelShader.setMat4("projection", projection);
+        //modelShader.setVec3("cameraPos",camera.Position );
+        //ourModel.Draw(modelShader);
 
-        glBindVertexArray(cubeVAO);
-        shaderGreen.use();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.75f, 0.75f, 0.0f));  // 移动到右上角
-        shaderRed.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //glBindVertexArray(cubeVAO);
+        //shaderRed.use();
+        //model = glm::mat4(1.0f);
+        //model = glm::translate(model, glm::vec3(-0.75f, 0.75f, 0.0f));  // 移动到左上角
+        //shaderRed.setMat4("model", model);
+        //glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        glBindVertexArray(cubeVAO);
-        shaderBlue.use();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.75f, -0.75f, 0.0f));  // 移动到左下角
-        shaderRed.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //glBindVertexArray(cubeVAO);
+        //shaderGreen.use();
+        //model = glm::mat4(1.0f);
+        //model = glm::translate(model, glm::vec3(0.75f, 0.75f, 0.0f));  // 移动到右上角
+        //shaderRed.setMat4("model", model);
+        //glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        glBindVertexArray(cubeVAO);
-        shaderYellow.use();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.75f, -0.75f, 0.0f));  // 移动到右下角
-        shaderRed.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //glBindVertexArray(cubeVAO);
+        //shaderBlue.use();
+        //model = glm::mat4(1.0f);
+        //model = glm::translate(model, glm::vec3(-0.75f, -0.75f, 0.0f));  // 移动到左下角
+        //shaderRed.setMat4("model", model);
+        //glDrawArrays(GL_TRIANGLES, 0, 36);
 
+        //glBindVertexArray(cubeVAO);
+        //shaderYellow.use();
+        //model = glm::mat4(1.0f);
+        //model = glm::translate(model, glm::vec3(0.75f, -0.75f, 0.0f));  // 移动到右下角
+        //shaderRed.setMat4("model", model);
+        //glDrawArrays(GL_TRIANGLES, 0, 36);
 
+        pointShader.use();
+        glBindVertexArray(pointsVAO);
+        glDrawArrays(GL_POINTS, 0, 4);
 
         //利用模板渲染物体边缘
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
