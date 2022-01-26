@@ -79,7 +79,9 @@ int main()
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     //创建Shader类
-    Shader modelShader("Shaders/shader.vert","Shaders/shader.frag","Shaders/explodeShader.geom");
+    Shader modelShader("Shaders/shader.vert","Shaders/shader.frag");
+    Shader normalShader("Shaders/shader.vert", "Shaders/normalShader.frag", "Shaders/normalShader.geom");
+
     //Shader lightShader("Shaders/light.vert", "Shaders/light.frag");
     Shader shaderSingleColor("Shaders/shaderSingleColor.vert", "Shaders/shaderSingleColor.frag");
     Shader screenShader("Shaders/screenShader.vert", "Shaders/screenShader.frag");
@@ -371,9 +373,14 @@ int main()
         modelShader.setMat4("model", model);
         modelShader.setMat4("view", view);
         modelShader.setMat4("projection", projection);
-        modelShader.setVec3("cameraPos",camera.Position );
+        //modelShader.setVec3("cameraPos",camera.Position );
         modelShader.setFloat("time", glfwGetTime());
         ourModel.Draw(modelShader);
+        normalShader.use();
+        normalShader.setMat4("model", model);
+        normalShader.setMat4("view", view);
+        normalShader.setMat4("projection", projection);
+        ourModel.Draw(normalShader);
 
         //箱子模型
         //glBindVertexArray(cubeVAO);

@@ -1,11 +1,11 @@
 #version 330 core
 out vec4 FragColor;
 
-in GS_OUT{
+in VS_OUT{
     vec2 TexCoords;
     vec3 Normal;
     vec3 FragPos;
-}gs_in;
+}vs_in;
 
 
 uniform vec3 cameraPos;
@@ -52,18 +52,18 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 void main()
 {
     
-    FragColor = texture(material.texture_specular1, gs_in.TexCoords);
+    FragColor = texture(material.texture_specular1, vs_in.TexCoords);
 
     //根据反射方向采集天空盒
-    vec3 I = normalize(gs_in.FragPos - cameraPos);
-    vec3 R = reflect(I, normalize(gs_in.Normal));
+    vec3 I = normalize(vs_in.FragPos - cameraPos);
+    vec3 R = reflect(I, normalize(vs_in.Normal));
     FragColor = vec4(texture(skybox, R).rgb, 1.0);
     //根据折射方向采集天空盒
     float ratio = 1.00 / 1.52;
-    R = refract(I, normalize(gs_in.Normal), ratio);
+    R = refract(I, normalize(vs_in.Normal), ratio);
     FragColor = vec4(texture(skybox, R).rgb, 1.0);
 
-    FragColor = texture(material.texture_specular1, gs_in.TexCoords);
+    FragColor = texture(material.texture_specular1, vs_in.TexCoords);
     //FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
     //FragColor = vec4(1.0,1.0,1.0, 1.0);
 //    // 属性

@@ -98,5 +98,7 @@
     <None Include="Shaders\pointShader.frag" />
     <None Include="Shaders\pointShader.geom" />
     <None Include="Shaders\explodeShader.geom" />
+    <None Include="Shaders\normalShader.geom" />
+    <None Include="Shaders\normalShader.frag" />
   </ItemGroup>
 </Project>
