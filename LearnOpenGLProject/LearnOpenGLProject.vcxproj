@@ -168,6 +168,7 @@
     <None Include="Shaders\8.green.fs" />
     <None Include="Shaders\8.red.fs" />
     <None Include="Shaders\8.yellow.fs" />
+    <None Include="Shaders\explodeShader.geom" />
     <None Include="Shaders\light.frag" />
     <None Include="Shaders\light.vert" />
     <None Include="Shaders\pointShader.frag" />

@@ -79,7 +79,7 @@ int main()
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     //创建Shader类
-    Shader modelShader("Shaders/shader.vert","Shaders/shader.frag");
+    Shader modelShader("Shaders/shader.vert","Shaders/shader.frag","Shaders/explodeShader.geom");
     //Shader lightShader("Shaders/light.vert", "Shaders/light.frag");
     Shader shaderSingleColor("Shaders/shaderSingleColor.vert", "Shaders/shaderSingleColor.frag");
     Shader screenShader("Shaders/screenShader.vert", "Shaders/screenShader.frag");
@@ -364,15 +364,18 @@ int main()
         
         //渲染模型
 
-        //glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        //glStencilMask(0xFF);
-        //modelShader.use();
-        //modelShader.setMat4("model", model);
-        //modelShader.setMat4("view", view);
-        //modelShader.setMat4("projection", projection);
-        //modelShader.setVec3("cameraPos",camera.Position );
-        //ourModel.Draw(modelShader);
+        //纳米装甲模型
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
+        modelShader.use();
+        modelShader.setMat4("model", model);
+        modelShader.setMat4("view", view);
+        modelShader.setMat4("projection", projection);
+        modelShader.setVec3("cameraPos",camera.Position );
+        modelShader.setFloat("time", glfwGetTime());
+        ourModel.Draw(modelShader);
 
+        //箱子模型
         //glBindVertexArray(cubeVAO);
         //shaderRed.use();
         //model = glm::mat4(1.0f);
@@ -401,9 +404,10 @@ int main()
         //shaderRed.setMat4("model", model);
         //glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        pointShader.use();
-        glBindVertexArray(pointsVAO);
-        glDrawArrays(GL_POINTS, 0, 4);
+        //点
+        //pointShader.use();
+        //glBindVertexArray(pointsVAO);
+        //glDrawArrays(GL_POINTS, 0, 4);
 
         //利用模板渲染物体边缘
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
