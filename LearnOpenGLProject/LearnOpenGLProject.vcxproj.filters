@@ -100,5 +100,7 @@
     <None Include="Shaders\explodeShader.geom" />
     <None Include="Shaders\normalShader.geom" />
     <None Include="Shaders\normalShader.frag" />
+    <None Include="Shaders\quadInstance.vert" />
+    <None Include="Shaders\quadInstance.frag" />
   </ItemGroup>
 </Project>
