@@ -259,6 +259,24 @@ int main()
         0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
         0.05f,  0.05f,  0.0f, 1.0f, 1.0f
     };
+    glm::vec2 translations[100];
+    int index = 0;
+    float offset = 0.1f;
+    for (int y = -10; y < 10; y += 2)
+    {
+        for (int x = -10; x < 10; x += 2)
+        {
+            glm::vec2 translation;
+            translation.x = (float)x / 10.0f + offset;
+            translation.y = (float)y / 10.0f + offset;
+            translations[index++] = translation;
+        }
+    }
+    unsigned int instanceVBO;
+    glGenBuffers(1, &instanceVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &(translations[0]), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     unsigned int quadInsVAO, quadInsVBO;
     glGenVertexArrays(1, &quadInsVAO);
     glGenBuffers(1, &quadInsVBO);
@@ -269,6 +287,13 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+    
+    glEnableVertexAttribArray(2);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glVertexAttribDivisor(2, 1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 
     //创建帧缓冲
     unsigned int framebuffer;
@@ -412,50 +437,12 @@ int main()
         //shaderRed.setMat4("model", model);
         //glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        //glBindVertexArray(cubeVAO);
-        //shaderGreen.use();
-        //model = glm::mat4(1.0f);
-        //model = glm::translate(model, glm::vec3(0.75f, 0.75f, 0.0f));  // 移动到右上角
-        //shaderRed.setMat4("model", model);
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        //glBindVertexArray(cubeVAO);
-        //shaderBlue.use();
-        //model = glm::mat4(1.0f);
-        //model = glm::translate(model, glm::vec3(-0.75f, -0.75f, 0.0f));  // 移动到左下角
-        //shaderRed.setMat4("model", model);
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        //glBindVertexArray(cubeVAO);
-        //shaderYellow.use();
-        //model = glm::mat4(1.0f);
-        //model = glm::translate(model, glm::vec3(0.75f, -0.75f, 0.0f));  // 移动到右下角
-        //shaderRed.setMat4("model", model);
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
-
         //点
         //pointShader.use();
         //glBindVertexArray(pointsVAO);
         //glDrawArrays(GL_POINTS, 0, 4);
 
-        glm::vec2 translations[100];
-        int index = 0;
-        float offset = 0.1f;
-        for (int y = -10; y < 10; y += 2)
-        {
-            for (int x = -10; x < 10; x += 2)
-            {
-                glm::vec2 translation;
-                translation.x = (float)x / 10.0f + offset;
-                translation.y = (float)y / 10.0f + offset;
-                translations[index++] = translation;
-            }
-        }
         quadInstanceShader.use();
-        for (unsigned int i = 0; i < 100; i++)
-        {
-            quadInstanceShader.setVec2(("offsets[" + to_string(i) + "]").c_str(), translations[i]);
-        }
         glBindVertexArray(quadInsVAO);
         glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);
 
