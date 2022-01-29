@@ -178,6 +178,7 @@
     <None Include="Shaders\pointShader.vert" />
     <None Include="Shaders\quadInstance.frag" />
     <None Include="Shaders\quadInstance.vert" />
+    <None Include="Shaders\rockIns.vert" />
     <None Include="Shaders\screenShader.frag" />
     <None Include="Shaders\screenShader.vert" />
     <None Include="Shaders\shader.fs" />

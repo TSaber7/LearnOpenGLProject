@@ -25,7 +25,7 @@ public:
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
-private:
+public:
     /*  模型数据  */
     vector<Mesh> meshes;
     string directory;
