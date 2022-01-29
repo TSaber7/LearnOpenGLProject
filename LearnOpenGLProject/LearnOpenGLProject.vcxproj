@@ -82,7 +82,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\C++Directories\Includes;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);D:\C++Directories\Libs;$(LibraryPath)</LibraryPath>
-    <OutDir>..\x64\Debug</OutDir>
+    <OutDir>./</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -168,6 +168,7 @@
     <None Include="Shaders\8.green.fs" />
     <None Include="Shaders\8.red.fs" />
     <None Include="Shaders\8.yellow.fs" />
+    <None Include="Shaders\cube.frag" />
     <None Include="Shaders\explodeShader.geom" />
     <None Include="Shaders\light.frag" />
     <None Include="Shaders\light.vert" />

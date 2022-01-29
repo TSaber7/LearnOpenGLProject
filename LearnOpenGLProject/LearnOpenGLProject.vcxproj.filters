@@ -103,5 +103,6 @@
     <None Include="Shaders\quadInstance.vert" />
     <None Include="Shaders\quadInstance.frag" />
     <None Include="Shaders\rockIns.vert" />
+    <None Include="Shaders\cube.frag" />
   </ItemGroup>
 </Project>
