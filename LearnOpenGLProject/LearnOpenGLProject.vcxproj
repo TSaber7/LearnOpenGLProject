@@ -163,6 +163,8 @@
     <None Include="assimp-vc140-mt.dll" />
     <None Include="light.frag" />
     <None Include="light.vert" />
+    <None Include="Shaders\1.advanced_lighting.fs" />
+    <None Include="Shaders\1.advanced_lighting.vs" />
     <None Include="Shaders\8.advanced_glsl.vs" />
     <None Include="Shaders\8.blue.fs" />
     <None Include="Shaders\8.green.fs" />

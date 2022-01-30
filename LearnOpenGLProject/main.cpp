@@ -22,8 +22,11 @@ unsigned int loadTexture(char const* path);
 unsigned int loadCubemap(vector<std::string> faces);
 
 float alpha = 0;
+//设置参数
 int screenWidth = 1920, screenHeight = 1080;
 int samples = 4;
+bool blinn = false;
+bool blinnKeyPressed = false;
 //创建相机类
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -84,6 +87,16 @@ int main()
 
     Shader screenShader("Shaders/screenShader.vert", "Shaders/screenShader.frag");
     Shader skyboxShader("Shaders/skybox.vert", "Shaders/skybox.frag");
+    Shader BlinnPhongShader("Shaders/1.advanced_lighting.vs", "Shaders/1.advanced_lighting.fs");
+
+    // load textures
+// -------------
+    unsigned int floorTexture = loadTexture("resources/textures/wood.png");
+    unsigned int cubeTexture = loadTexture("resources/textures/container2.png");
+
+    // lighting info
+// -------------
+    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 
     //模型
     //Model ourModel("Objects/nanosuit.obj");
@@ -226,6 +239,33 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+    float planeVertices[] = {
+        // positions            // normals         // texcoords
+         10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
+        -10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,   0.0f,  0.0f,
+        -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
+
+         10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
+        -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
+         10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,  10.0f, 10.0f
+    };
+    // plane VAO
+    unsigned int planeVAO, planeVBO;
+    glGenVertexArrays(1, &planeVAO);
+    glGenBuffers(1, &planeVBO);
+    glBindVertexArray(planeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glBindVertexArray(0);
+
+   
+
     //MSAA帧缓冲
     //创建帧缓冲
     unsigned int multisampledFBO;
@@ -242,6 +282,7 @@ int main()
     // 将它附加到当前绑定的帧缓冲对象
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampledTexColor, 0);
 
+    //创建渲染缓冲作为深度模板缓冲
     unsigned int multisampledRBO;
     glGenRenderbuffers(1, &multisampledRBO);
     glBindRenderbuffer(GL_RENDERBUFFER, multisampledRBO);
@@ -320,11 +361,8 @@ int main()
         //渲染到帧缓冲
         // 第一处理阶段(Pass)
         glBindFramebuffer(GL_FRAMEBUFFER, multisampledFBO);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 我们现在不使用模板缓冲
+
         glEnable(GL_DEPTH_TEST);
-
-
         //清除颜色缓冲,深度缓冲,模板缓冲
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -392,7 +430,22 @@ int main()
 
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
+        // draw objects
+        BlinnPhongShader.use();
+        BlinnPhongShader.setInt("floorTexture", 0);
+        BlinnPhongShader.setMat4("projection", projection);
+        BlinnPhongShader.setMat4("view", view);
+        // set light uniforms
+        BlinnPhongShader.setVec3("viewPos", camera.Position);
+        BlinnPhongShader.setVec3("lightPos", lightPos);
+        BlinnPhongShader.setInt("blinn", blinn);
+        // floor
+        glBindVertexArray(planeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, floorTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
+        std::cout << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
 
         //最后渲染天空盒便于深度测试中被丢弃
         glDepthFunc(GL_LEQUAL);
@@ -503,6 +556,15 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(DOWN, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         camera.ProcessKeyboard(UP, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed)
+    {
+        blinn = !blinn;
+        blinnKeyPressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
+    {
+        blinnKeyPressed = false;
+    }
 }
 
 unsigned int loadTexture(char const* path)
