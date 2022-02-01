@@ -9,7 +9,11 @@ const float offset = 1.0 / 300.0;
 
 void main()
 {
+
     FragColor=texture(screenTexture,TexCoords.st);
+    // apply gamma correction
+    float gamma = 2.2;
+    FragColor.rgb = pow(FragColor.rgb, vec3(1.0/gamma));
     //模糊后处理
 //    vec2 offsets[9] = vec2[](
 //        vec2(-offset,  offset),  左上
