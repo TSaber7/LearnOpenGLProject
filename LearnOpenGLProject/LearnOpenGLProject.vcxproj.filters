@@ -106,5 +106,9 @@
     <None Include="Shaders\cube.frag" />
     <None Include="Shaders\1.advanced_lighting.fs" />
     <None Include="Shaders\1.advanced_lighting.vs" />
+    <None Include="Shaders\simpleDepthShader.vert" />
+    <None Include="Shaders\simpleDepthShader.frag" />
+    <None Include="Shaders\3.1.1.debug_quad.vs" />
+    <None Include="Shaders\3.1.1.debug_quad_depth.fs" />
   </ItemGroup>
 </Project>
