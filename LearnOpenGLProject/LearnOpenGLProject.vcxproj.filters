@@ -110,5 +110,7 @@
     <None Include="Shaders\simpleDepthShader.frag" />
     <None Include="Shaders\3.1.1.debug_quad.vs" />
     <None Include="Shaders\3.1.1.debug_quad_depth.fs" />
+    <None Include="Shaders\shadowMapping.vert" />
+    <None Include="Shaders\shadowMapping.frag" />
   </ItemGroup>
 </Project>

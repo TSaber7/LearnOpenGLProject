@@ -30,9 +30,16 @@ void renderPlane();
 void renderQuad();
 
 float alpha = 0;
+#pragma region 设置参数
+
 //设置参数
 int screenWidth = 1920, screenHeight = 1080;
 int samples = 4;
+const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+#pragma endregion
+
+
 bool blinn = false;
 bool blinnKeyPressed = false;
 //创建相机类
@@ -97,6 +104,9 @@ int main()
     Shader BlinnPhongShader("Shaders/1.advanced_lighting.vs", "Shaders/1.advanced_lighting.fs");
     Shader simpleDepthShader("Shaders/simpleDepthShader.vert", "Shaders/simpleDepthShader.frag");
     Shader debugDepthQuad("Shaders/3.1.1.debug_quad.vs", "Shaders/3.1.1.debug_quad_depth.fs");
+    Shader shadowMappingShader("Shaders/shadowMapping.vert", "Shaders/shadowMapping.frag");
+    Shader lightShader("Shaders/light.vert", "Shaders/light.frag");
+
 #pragma endregion
 #pragma region 载入Texture
     unsigned int cubeTexture = loadTexture("resources/textures/container2.png");
@@ -108,7 +118,7 @@ int main()
 
     // lighting info
 // -------------
-    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
 
     //模型
     //Model ourModel("Objects/nanosuit.obj");
@@ -233,7 +243,6 @@ int main()
     GLuint depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
 
-    const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
     GLuint depthMap;
     glGenTextures(1, &depthMap);
@@ -242,8 +251,10 @@ int main()
         SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
@@ -299,13 +310,7 @@ int main()
         //处理输入
         processInput(window);
 
-#pragma region 摄像机MVP矩阵
-        //设置MVP矩阵
-        //设置模型矩阵
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-
+#pragma region 摄像机VP矩阵
         //设置观察矩阵
         glm::mat4 view;
         view = camera.GetViewMatrix();
@@ -318,7 +323,7 @@ int main()
 #pragma region 光源VP矩阵
         GLfloat near_plane = 1.0f, far_plane = 7.5f;
         glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-        glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 #pragma endregion
 #pragma region 渲染阴影贴图深度缓冲
@@ -344,78 +349,45 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-
-        //将观察矩阵更新到Uniform缓冲
-        glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-        //将投影矩阵更新到Uniform缓冲
-        glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-        //线框模式
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        glEnable(GL_STENCIL_TEST);
-        glEnable(GL_DEPTH_TEST);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        
         debugDepthQuad.use();
         debugDepthQuad.setInt("depthMap", 0);
         debugDepthQuad.setFloat("near_plane", near_plane);
         debugDepthQuad.setFloat("far_plane", far_plane);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, depthMap);
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         renderQuad();
-        //cubeShader.use();
-        //cubeShader.setMat4("view", view);
-        //cubeShader.setMat4("projection", projection);
-        //renderScene(cubeShader);
-        //渲染模型
-        //纳米装甲模型
-        //glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        //glStencilMask(0xFF);
-        //modelShader.use();
-        //modelShader.setMat4("model", model);
-        //modelShader.setMat4("view", view);
-        //modelShader.setMat4("projection", projection);
-        ////modelShader.setVec3("cameraPos",camera.Position );
-        //modelShader.setFloat("time", glfwGetTime());
-        //ourModel.Draw(modelShader);
-        //normalShader.use();
-        //normalShader.setMat4("model", model);
-        //normalShader.setMat4("view", view);
-        //normalShader.setMat4("projection", projection);
-        //ourModel.Draw(normalShader);
+        glViewport(0, 0, screenWidth, screenHeight);
 
-        ////箱子模型
-        //glBindVertexArray(cubeVAO);
-        //cubeShader.use();
-        //model = glm::mat4(1.0f);
-        //model = glm::translate(model, glm::vec3(-0.75f, 0.75f, 0.0f));  // 移动到左上角
-        //cubeShader.setMat4("model", model);
-        //cubeShader.setMat4("view", view);
-        //cubeShader.setMat4("projection", projection);
+#pragma region 渲染光源位置
+        lightShader.use();
+        lightShader.setMat4("projection", projection);
+        lightShader.setMat4("view", view);
+        glm::mat4 lightModel= glm::translate(glm::mat4(1.0f), lightPos);
+        lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+        lightShader.setMat4("model", lightModel);
+        renderCube();
+#pragma endregion
 
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
+#pragma region 渲染场景
+        shadowMappingShader.use();
+        shadowMappingShader.setMat4("projection", projection);
+        shadowMappingShader.setMat4("view", view);
+        shadowMappingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        shadowMappingShader.setVec3("viewPos", camera.Position);
+        shadowMappingShader.setVec3("lightPos", lightPos);
+        shadowMappingShader.setInt("diffuseTexture", 0);
+        shadowMappingShader.setInt("shadowMap", 1);//fix bug
 
-        //// draw objects
-        //BlinnPhongShader.use();
-        //BlinnPhongShader.setInt("floorTexture", 0);
-        //BlinnPhongShader.setMat4("projection", projection);
-        //BlinnPhongShader.setMat4("view", view);
-        //// set light uniforms
-        //BlinnPhongShader.setVec3("viewPos", camera.Position);
-        //BlinnPhongShader.setVec3("lightPos", lightPos);
-        //BlinnPhongShader.setInt("blinn", blinn);
-        //// floor
-        //glBindVertexArray(planeVAO);
-        //glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_2D, floorTexture);
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, floorTexture);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        renderScene(shadowMappingShader);
 
+#pragma endregion
 
+#pragma region 渲染天空盒
         //最后渲染天空盒便于深度测试中被丢弃
         glDepthFunc(GL_LEQUAL);
         glDepthMask(GL_FALSE);
@@ -440,6 +412,9 @@ int main()
 
 #pragma endregion
 
+
+#pragma endregion
+
 #pragma region 传送到后处理帧缓冲并渲染到屏幕
         // 第二处理阶段
         glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
@@ -454,6 +429,7 @@ int main()
         screenShader.setInt("screenTexture", 0);
 
         glDisable(GL_DEPTH_TEST);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, postProcessingTexColor);
         renderQuad();
 
@@ -716,13 +692,13 @@ void renderPlane() {
     if (planeVAO == 0) {
         float planeVertices[] = {
             // positions            // normals         // texcoords
-             10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
-            -10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,   0.0f,  0.0f,
-            -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
+         25.0f, -0.5f,  25.0f,  0.0f, 1.0f, 0.0f,  25.0f,  0.0f,
+        -25.0f, -0.5f,  25.0f,  0.0f, 1.0f, 0.0f,   0.0f,  0.0f,
+        -25.0f, -0.5f, -25.0f,  0.0f, 1.0f, 0.0f,   0.0f, 25.0f,
 
-             10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
-            -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
-             10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,  10.0f, 10.0f
+         25.0f, -0.5f,  25.0f,  0.0f, 1.0f, 0.0f,  25.0f,  0.0f,
+        -25.0f, -0.5f, -25.0f,  0.0f, 1.0f, 0.0f,   0.0f, 25.0f,
+         25.0f, -0.5f, -25.0f,  0.0f, 1.0f, 0.0f,  25.0f, 25.0f
         };
         // plane VAO
         glGenVertexArrays(1, &planeVAO);

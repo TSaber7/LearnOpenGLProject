@@ -192,6 +192,8 @@
     <None Include="Shaders\shader.vert" />
     <None Include="Shaders\shaderSingleColor.frag" />
     <None Include="Shaders\shaderSingleColor.vert" />
+    <None Include="Shaders\shadowMapping.frag" />
+    <None Include="Shaders\shadowMapping.vert" />
     <None Include="Shaders\simpleDepthShader.frag" />
     <None Include="Shaders\simpleDepthShader.vert" />
     <None Include="Shaders\skybox.frag" />
