@@ -35,7 +35,7 @@ float alpha = 0;
 //设置参数
 int screenWidth = 1920, screenHeight = 1080;
 int samples = 4;
-const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+const GLuint SHADOW_WIDTH = 1024*4, SHADOW_HEIGHT = 1024*4;
 
 #pragma endregion
 
@@ -121,7 +121,6 @@ int main()
     glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
 
     //模型
-    //Model ourModel("Objects/nanosuit.obj");
     //Model planet("resources/objects/planet/planet.obj");
     //Model rock("resources/objects/rock/rock.obj");
 
@@ -356,7 +355,7 @@ int main()
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, depthMap);
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        renderQuad();
+        //renderQuad();
         glViewport(0, 0, screenWidth, screenHeight);
 
 #pragma region 渲染光源位置
@@ -593,6 +592,7 @@ unsigned int loadCubemap(vector<std::string> faces)
 
 void renderScene( Shader& shader)
 {
+    static Model nanosuit("Objects/nanosuit.obj");
     shader.use();
     // floor
     glm::mat4 model = glm::mat4(1.0f);
@@ -614,6 +614,12 @@ void renderScene( Shader& shader)
     model = glm::scale(model, glm::vec3(0.25));
     shader.setMat4("model", model);
     renderCube();
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(3.0f, -0.5f, -2.0));
+    model = glm::rotate(model, glm::radians(-90.0f), glm::normalize(glm::vec3(0.0, 1.0, 0.0)));
+    model = glm::scale(model, glm::vec3(0.2f));
+    shader.setMat4("model", model);
+    nanosuit.Draw(shader);
 }
 void renderCube()
 {

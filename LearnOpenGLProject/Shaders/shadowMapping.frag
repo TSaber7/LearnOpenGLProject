@@ -22,13 +22,48 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     //为了和深度贴图的深度相比较，z分量需要变换到[0,1]；为了作为从深度贴图中采样的坐标，xy分量也需要变换到[0,1]
     projCoords = projCoords * 0.5 + 0.5;
+    if(projCoords.z > 1.0)
+        return 0.0;
+
     float closestDepth = texture(shadowMap, projCoords.xy).r;
     float currentDepth = projCoords.z;
     vec3 lightDir=lightPos-fs_in.FragPos;
-    float bias = max(0.05 * (1.0 - dot(fs_in.Normal, lightDir)), 0.005); 
-    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0; 
-    if(projCoords.z > 1.0)
-        shadow = 0.0;
+    float bias = max(0.05 * (1.0 - dot(fs_in.Normal, lightDir)), 0.02); 
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+
+//    int blockerSize=1;
+//    int tmp=(blockerSize-1)/2;
+//    float dBlocker=0.0;
+//    for(int x = -tmp; x <= tmp; ++x)
+//    {
+//        for(int y = -tmp; y <= tmp; ++y)
+//        {
+//            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+//            dBlocker += currentDepth - bias > pcfDepth ? pcfDepth : 0.0;        
+//        }    
+//    }
+//    dBlocker /= blockerSize*blockerSize;
+//    if(dBlocker<0.01)
+//        return 0.0;
+    float wLight=1;
+    float wPenumbra=currentDepth - bias > closestDepth ? (currentDepth-bias-closestDepth)*wLight/closestDepth : 0.0;
+    //FragColor = vec4(vec3(closestDepth), 1.0f);
+    if(wPenumbra>4){
+        return 0.0;
+    }
+    int filterSize=max(int(wPenumbra*4)*2+1,3);
+    //int filterSize=5;
+    int tmp=(filterSize-1)/2;
+    for(int x = -tmp; x <= tmp; ++x)
+    {
+        for(int y = -tmp; y <= tmp; ++y)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth ? 1.0: 0.0;        
+        }    
+    }
+    shadow /= filterSize*filterSize;
     return shadow;
 }
 
