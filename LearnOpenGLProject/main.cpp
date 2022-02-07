@@ -9,9 +9,20 @@
 #include "Camera.h"
 #include "Model.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+// [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
+// To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
+// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
+#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
+#pragma comment(lib, "legacy_stdio_definitions")
+#endif
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -37,6 +48,7 @@ int screenWidth = 1920, screenHeight = 1080;
 int samples = 4;
 const GLuint SHADOW_WIDTH = 1024*4, SHADOW_HEIGHT = 1024*4;
 
+const char* glsl_version = "#version 330";
 #pragma endregion
 
 
@@ -53,6 +65,11 @@ float lastX = screenWidth / 2, lastY = screenHeight / 2;
 
 //防止刚进入窗口时鼠标位置的剧烈变化
 bool firstMouse = true;
+
+//鼠标控制视角旋转的开关
+bool enableViewRot = false;
+
+ImGuiIO* io;
 int main()
 {
 
@@ -80,9 +97,33 @@ int main()
         return -1;
     }
 
+#pragma region ImGUIInit
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    io = &ImGui::GetIO(); //(void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
+    // Our state
+    bool show_demo_window = false;
+    bool show_another_window = false;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+#pragma endregion
+
+
     //设置视口
     glViewport(0, 0, screenWidth, screenHeight);
-
+#pragma region 注册回调函数
     //注册回调函数
 
     //窗口大小变化时调用
@@ -92,8 +133,11 @@ int main()
     //鼠标滚轮
     glfwSetScrollCallback(window, scroll_callback);
 
-    //捕捉光标
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#pragma endregion
+
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
 #pragma region 创建Shader
     //创建Shader类
     Shader shader("Shaders/shader.vert", "Shaders/shader.frag");
@@ -306,8 +350,56 @@ int main()
 #pragma region 渲染循环
     while (!glfwWindowShouldClose(window))
     {
+        //查询事件
+        glfwPollEvents();
+
         //处理输入
         processInput(window);
+#pragma region ImGUIFrame
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
+
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("Light");                          // Create a window called "Hello, world!" and append into it.
+
+            //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            //ImGui::Checkbox("Another Window", &show_another_window);
+
+            //ImGui::SliderFloat("float", &lightPos.x, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::DragFloat3("lightPos", &lightPos.x,0.1f);
+            //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            //if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+            //    counter++;
+            //ImGui::SameLine();
+            //ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+
+        // 3. Show another simple window.
+        if (show_another_window)
+        {
+            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from another window!");
+            if (ImGui::Button("Close Me"))
+                show_another_window = false;
+            ImGui::End();
+        }
+#pragma endregion
+
 
 #pragma region 摄像机VP矩阵
         //设置观察矩阵
@@ -320,7 +412,7 @@ int main()
 
 #pragma endregion
 #pragma region 光源VP矩阵
-        GLfloat near_plane = 1.0f, far_plane = 7.5f;
+        GLfloat near_plane = 1.0f, far_plane = 15.0f;
         glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
         glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 lightSpaceMatrix = lightProjection * lightView;
@@ -440,8 +532,17 @@ int main()
 #pragma endregion
 
 
-        //查询事件
-        glfwPollEvents();
+#pragma region ImGUIRendering
+        // Rendering
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(clear_color.x* clear_color.w, clear_color.y* clear_color.w, clear_color.z* clear_color.w, clear_color.w);
+        //glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#pragma endregion
+
         //双缓冲交换
         glfwSwapBuffers(window);
         //追踪每帧渲染时间
@@ -452,7 +553,14 @@ int main()
     }
 #pragma endregion
 
-    //渲染循环
+#pragma region ImGUIClean
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(window);
+#pragma endregion
 
     glfwTerminate();
 
@@ -466,7 +574,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    
+    io->AddMousePosEvent(xpos, ypos);
+
+    if (io->WantCaptureMouse) {
+        return;
+    }
     if (firstMouse) // 这个bool变量初始时是设定为true的
     {
         lastX = xpos;
@@ -477,6 +589,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     float yoffset = lastY - ypos; // 注意这里y坐标是相反的
     lastX = xpos;
     lastY = ypos;
+    if (!enableViewRot)
+        return;
 
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
@@ -519,6 +633,15 @@ void processInput(GLFWwindow* window)
     {
         blinnKeyPressed = false;
     }
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+        enableViewRot = true;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
+        enableViewRot = false;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
 }
 
 unsigned int loadTexture(char const* path)

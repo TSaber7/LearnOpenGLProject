@@ -49,11 +49,11 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     float wLight=1;
     float wPenumbra=currentDepth - bias > closestDepth ? (currentDepth-bias-closestDepth)*wLight/closestDepth : 0.0;
     //FragColor = vec4(vec3(closestDepth), 1.0f);
-    if(wPenumbra>4){
-        return 0.0;
-    }
-    int filterSize=max(int(wPenumbra*4)*2+1,3);
-    //int filterSize=5;
+//    if(wPenumbra>4){
+//        return 0.0;
+//    }
+//    //int filterSize=max(int(wPenumbra*4)*2+1,3);
+    int filterSize=5;
     int tmp=(filterSize-1)/2;
     for(int x = -tmp; x <= tmp; ++x)
     {
