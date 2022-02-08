@@ -14,7 +14,7 @@ class Shader
 {
 public:
     // 程序ID
-    unsigned int ID;
+    unsigned int Program;
     enum ShaderType {VERTEX,FRAGMENT,GEOMETRY};
 
     Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath=NULL)
@@ -26,20 +26,20 @@ public:
             geometry = loadAndCompileShader(GEOMETRY,geometryPath);
 
         // 着色器程序
-        ID = glCreateProgram();
-        glAttachShader(ID, vertex);
-        glAttachShader(ID, fragment);
+        Program = glCreateProgram();
+        glAttachShader(Program, vertex);
+        glAttachShader(Program, fragment);
         if (geometryPath != NULL)
-            glAttachShader(ID, geometry);
-        glLinkProgram(ID);
+            glAttachShader(Program, geometry);
+        glLinkProgram(Program);
 
         // 打印连接错误（如果有的话）
         int success;
         char infoLog[512];
-        glGetProgramiv(ID, GL_LINK_STATUS, &success);
+        glGetProgramiv(Program, GL_LINK_STATUS, &success);
         if (!success)
         {
-            glGetProgramInfoLog(ID, 512, NULL, infoLog);
+            glGetProgramInfoLog(Program, 512, NULL, infoLog);
             std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
         }
 
@@ -113,32 +113,32 @@ public:
 	}
     void use()
     {
-        glUseProgram(ID);
+        glUseProgram(Program);
     }
     void setBool(const std::string& name, bool value) const
     {
-        glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
+        glUniform1i(glGetUniformLocation(Program, name.c_str()), (int)value);
     }
     void setInt(const std::string& name, int value) const
     {
-        glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+        glUniform1i(glGetUniformLocation(Program, name.c_str()), value);
     }
     void setFloat(const std::string& name, float value) const
     {
-        glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+        glUniform1f(glGetUniformLocation(Program, name.c_str()), value);
     }
     void setMat4(const std::string& name, glm::mat4 matrix) {
-        glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
+        glUniformMatrix4fv(glGetUniformLocation(Program, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
     }
     void setVec2(const std::string& name, glm::vec2 value) {
-        glUniform2f(glGetUniformLocation(ID, name.c_str()), value.x, value.y);
+        glUniform2f(glGetUniformLocation(Program, name.c_str()), value.x, value.y);
     }
 
     void setVec3(const std::string& name, float x,float y,float z) {
-        glUniform3f(glGetUniformLocation(ID, name.c_str()), x, y, z);
+        glUniform3f(glGetUniformLocation(Program, name.c_str()), x, y, z);
     }
     void setVec3(const std::string& name,glm::vec3 value) {
-        glUniform3f(glGetUniformLocation(ID, name.c_str()), value.x, value.y, value.z);
+        glUniform3f(glGetUniformLocation(Program, name.c_str()), value.x, value.y, value.z);
     }
 };
 

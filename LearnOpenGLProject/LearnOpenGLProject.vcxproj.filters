@@ -33,31 +33,31 @@
     <ClInclude Include="Model.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imgui.h">
+    <ClInclude Include="ImGui\imconfig.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imgui_impl_glfw.h">
+    <ClInclude Include="ImGui\imgui.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imgui_impl_opengl3.h">
+    <ClInclude Include="ImGui\imgui_impl_glfw.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imgui_impl_opengl3_loader.h">
+    <ClInclude Include="ImGui\imgui_impl_opengl3.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imconfig.h">
+    <ClInclude Include="ImGui\imgui_impl_opengl3_loader.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imgui_internal.h">
+    <ClInclude Include="ImGui\imgui_internal.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imstb_rectpack.h">
+    <ClInclude Include="ImGui\imstb_rectpack.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imstb_textedit.h">
+    <ClInclude Include="ImGui\imstb_textedit.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imstb_truetype.h">
+    <ClInclude Include="ImGui\imstb_truetype.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -68,25 +68,25 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="imgui.cpp">
+    <ClCompile Include="ImGui\imgui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_impl_glfw.cpp">
+    <ClCompile Include="ImGui\imgui_demo.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_impl_opengl3.cpp">
+    <ClCompile Include="ImGui\imgui_draw.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_demo.cpp">
+    <ClCompile Include="ImGui\imgui_impl_glfw.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_draw.cpp">
+    <ClCompile Include="ImGui\imgui_impl_opengl3.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_tables.cpp">
+    <ClCompile Include="ImGui\imgui_tables.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_widgets.cpp">
+    <ClCompile Include="ImGui\imgui_widgets.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,12 +101,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\shader.vert">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="light.vert">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="light.frag">
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\shaderSingleColor.frag">
@@ -160,5 +154,11 @@
     <None Include="Shaders\shadowMapping.vert" />
     <None Include="Shaders\shadowMapping.frag" />
     <None Include="Shaders\light.geom" />
+    <None Include="ImGui\imgui.ini" />
+    <None Include="Shaders\CubeDepthShader.geom" />
+    <None Include="Shaders\CubeDepthShader.vert" />
+    <None Include="Shaders\CubeDepthShader.frag" />
+    <None Include="Shaders\CubeShadowMapping.frag" />
+    <None Include="Shaders\CubeShadowMapping.vert" />
   </ItemGroup>
 </Project>
