@@ -160,5 +160,7 @@
     <None Include="Shaders\CubeDepthShader.frag" />
     <None Include="Shaders\CubeShadowMapping.frag" />
     <None Include="Shaders\CubeShadowMapping.vert" />
+    <None Include="Shaders\normalMapping.vert" />
+    <None Include="Shaders\normalMapping.frag" />
   </ItemGroup>
 </Project>

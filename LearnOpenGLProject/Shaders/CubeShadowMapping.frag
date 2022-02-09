@@ -24,6 +24,8 @@ float ShadowCalculation(vec3 fragPos)
     float shadow = 0.0;
     float samples = 5.0;
     float viewDistance=length(fragPos-viewPos);
+    	//根据到摄像机的距离，改变多次采样的偏移量，远处将更柔和
+
     float offset = (1.0 + (viewDistance / far_plane)) / 25.0;
     for(float x = -offset; x <= offset; x += offset/((samples-1)/2))
     {

@@ -42,6 +42,8 @@ void renderPlane();
 
 void renderQuad();
 
+void renderQuadWithNormal();
+
 float alpha = 0;
 #pragma region 设置参数
 
@@ -148,24 +150,21 @@ int main()
     Shader screenShader("Shaders/screenShader.vert", "Shaders/screenShader.frag");
     Shader skyboxShader("Shaders/skybox.vert", "Shaders/skybox.frag");
     Shader BlinnPhongShader("Shaders/1.advanced_lighting.vs", "Shaders/1.advanced_lighting.fs");
-    //Shader simpleDepthShader("Shaders/simpleDepthShader.vert", "Shaders/simpleDepthShader.frag");
-    Shader debugDepthQuad("Shaders/3.1.1.debug_quad.vs", "Shaders/3.1.1.debug_quad_depth.fs");
-    //Shader shadowMappingShader("Shaders/shadowMapping.vert", "Shaders/shadowMapping.frag");
     Shader lightShader("Shaders/light.vert", "Shaders/light.frag");
-    Shader CubeDepthShader("Shaders/CubeDepthShader.vert", "Shaders/CubeDepthShader.frag","Shaders/CubeDepthShader.geom");
-    Shader cubeShadowMappingShader("Shaders/CubeShadowMapping.vert", "Shaders/CubeShadowMapping.frag");
+    Shader normalMappingShader("Shaders/normalMapping.vert","Shaders/normalMapping.frag");
 #pragma endregion
 #pragma region 载入Texture
     unsigned int cubeTexture = loadTexture("resources/textures/container2.png");
     unsigned int floorTexture = loadTexture("resources/textures/wood.png");
-
+    GLuint diffuseMap = loadTexture("resources/textures/brickwall.jpg");
+    GLuint normalMap = loadTexture("resources/textures/brickwall_normal.jpg");
 #pragma endregion
 
 
 
     // lighting info
 // -------------
-    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+    glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
 
     //模型
     //Model planet("resources/objects/planet/planet.obj");
@@ -292,54 +291,6 @@ int main()
 
     
 
-#pragma region 阴影贴图帧缓冲
-    //GLuint depthMapFBO;
-    //glGenFramebuffers(1, &depthMapFBO);
-
-
-    //GLuint depthMap;
-    //glGenTextures(1, &depthMap);
-    //glBindTexture(GL_TEXTURE_2D, depthMap);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-    //    SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    //GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    //glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-    //glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    //glDrawBuffer(GL_NONE);
-    //glReadBuffer(GL_NONE);
-    //if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    //    std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#pragma endregion
-#pragma region 万向阴影贴图帧缓冲
-    GLuint depthCubeMapFBO;
-    glGenFramebuffers(1, &depthCubeMapFBO);
-    GLuint depthCubemap;
-    glGenTextures(1, &depthCubemap);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-    for (GLuint i = 0; i < 6; ++i)
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
-            SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#pragma endregion
-
 #pragma endregion
 
     
@@ -357,16 +308,6 @@ int main()
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    //绑定着色器Uniform块到绑定点0
-    //unsigned int uniformBlockIndexRed = glGetUniformBlockIndex(shaderRed.ID, "Matrices");
-    //unsigned int uniformBlockIndexGreen = glGetUniformBlockIndex(shaderGreen.ID, "Matrices");
-    //unsigned int uniformBlockIndexBlue = glGetUniformBlockIndex(shaderBlue.ID, "Matrices");
-    //unsigned int uniformBlockIndexYellow = glGetUniformBlockIndex(shaderYellow.ID, "Matrices");
-
-    //glUniformBlockBinding(shaderRed.ID, uniformBlockIndexRed, 0);
-    //glUniformBlockBinding(shaderGreen.ID, uniformBlockIndexGreen, 0);
-    //glUniformBlockBinding(shaderBlue.ID, uniformBlockIndexBlue, 0);
-    //glUniformBlockBinding(shaderYellow.ID, uniformBlockIndexYellow, 0);
 
     //创建Uniform缓冲对象本身，并将其绑定到绑定点0
     unsigned int uboMatrices;
@@ -397,6 +338,7 @@ int main()
             ImGui::ShowDemoWindow(&show_demo_window);
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        static bool NormalMapping = true;
         {
             static float f = 0.0f;
             static int counter = 0;
@@ -410,7 +352,8 @@ int main()
             //ImGui::SliderFloat("float", &lightPos.x, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::DragFloat3("lightPos", &lightPos.x,0.1f);
             //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
+            
+            ImGui::Checkbox("Normal Mapping", &NormalMapping);
             //if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
             //    counter++;
             //ImGui::SameLine();
@@ -419,7 +362,7 @@ int main()
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
-
+        
         // 3. Show another simple window.
         if (show_another_window)
         {
@@ -444,61 +387,11 @@ int main()
 #pragma endregion
 #pragma region 光源VP矩阵
 
-#pragma region 平行光
-        //GLfloat near_plane = 1.0f, far_plane = 15.0f;
-        //glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-        //glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        //glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+
 
 #pragma endregion
 
-#pragma region 点光源6面方向
-        GLfloat aspect = (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT;
-        GLfloat near = 1.0f;
-        GLfloat far = 25.0f;
-        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
-
-        std::vector<glm::mat4> shadowTransforms;
-        shadowTransforms.push_back(shadowProj *
-            glm::lookAt(lightPos, lightPos + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-        shadowTransforms.push_back(shadowProj *
-            glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-        shadowTransforms.push_back(shadowProj *
-            glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
-        shadowTransforms.push_back(shadowProj *
-            glm::lookAt(lightPos, lightPos + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
-        shadowTransforms.push_back(shadowProj *
-            glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
-        shadowTransforms.push_back(shadowProj *
-            glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
-#pragma endregion
-
-#pragma endregion
-#pragma region 渲染阴影贴图深度缓冲
-        //glEnable(GL_DEPTH_TEST);
-        //simpleDepthShader.use();
-        //simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        //glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        //glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-        //glClear(GL_DEPTH_BUFFER_BIT);
-        //renderScene(simpleDepthShader);
-        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#pragma endregion
-
-#pragma region 渲染万向阴影贴图深度缓冲
-        glEnable(GL_DEPTH_TEST);
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        CubeDepthShader.use();
-        for (int i = 0; i < 6; ++i) {
-            CubeDepthShader.setMat4("shadowMatrices["+to_string(i)+"]",shadowTransforms[i]);
-        }
-        CubeDepthShader.setVec3("lightPos", lightPos);
-        CubeDepthShader.setFloat("far_plane", far);
-        glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        renderSceneCubeSM(CubeDepthShader);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#pragma endregion
 
 #pragma region 渲染到多重采样帧缓冲
         glViewport(0, 0, screenWidth, screenHeight);
@@ -524,23 +417,22 @@ int main()
 #pragma endregion
 
 #pragma region 渲染场景
-        cubeShadowMappingShader.use();
-        cubeShadowMappingShader.setMat4("projection", projection);
-        cubeShadowMappingShader.setMat4("view", view);
-        //cubeShadowMappingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        cubeShadowMappingShader.setVec3("viewPos", camera.Position);
-        cubeShadowMappingShader.setVec3("lightPos", lightPos);
-        cubeShadowMappingShader.setInt("diffuseTexture", 0);
-        cubeShadowMappingShader.setInt("depthMap", 1);//fix bug
-        cubeShadowMappingShader.setFloat("far_plane", far);
-
+        normalMappingShader.use();
+        glm::mat4 model;
+        //model = glm::rotate(model, 180.0f, glm::normalize(glm::vec3(0.0, 1.0, 0.0))); // Rotates the quad to show normal mapping works in all directions
+        normalMappingShader.setMat4("model", model);
+        normalMappingShader.setVec3("lightPos", lightPos);
+        normalMappingShader.setVec3("viewPos", camera.Position);
+        normalMappingShader.setMat4("projection", projection);
+        normalMappingShader.setMat4("view", view);
+        normalMappingShader.setInt("diffuseMap", 0);
+        normalMappingShader.setInt("normalMap", 1);
+        normalMappingShader.setBool("normalMapping", NormalMapping);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, floorTexture);
+        glBindTexture(GL_TEXTURE_2D, diffuseMap);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-
-        renderSceneCubeSM(cubeShadowMappingShader);
-
+        glBindTexture(GL_TEXTURE_2D, normalMap);
+        renderQuadWithNormal();
 #pragma endregion
 
 #pragma region 渲染天空盒
@@ -975,5 +867,94 @@ void renderQuad()
     }
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+void renderQuadWithNormal() {
+    static GLuint quadVAO = 0, quadVBO;
+    if (quadVAO == 0)
+    {
+        // positions
+        glm::vec3 pos1(-1.0, 1.0, 0.0);
+        glm::vec3 pos2(-1.0, -1.0, 0.0);
+        glm::vec3 pos3(1.0, -1.0, 0.0);
+        glm::vec3 pos4(1.0, 1.0, 0.0);
+        // texture coordinates
+        glm::vec2 uv1(0.0, 1.0);
+        glm::vec2 uv2(0.0, 0.0);
+        glm::vec2 uv3(1.0, 0.0);
+        glm::vec2 uv4(1.0, 1.0);
+        // normal vector
+        glm::vec3 nm(0.0, 0.0, 1.0);
+
+        // calculate tangent/bitangent vectors of both triangles
+        glm::vec3 tangent1, bitangent1;
+        glm::vec3 tangent2, bitangent2;
+        // - triangle 1
+        glm::vec3 edge1 = pos2 - pos1;
+        glm::vec3 edge2 = pos3 - pos1;
+        glm::vec2 deltaUV1 = uv2 - uv1;
+        glm::vec2 deltaUV2 = uv3 - uv1;
+
+        GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent1 = glm::normalize(tangent1);
+
+        bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+        bitangent1 = glm::normalize(bitangent1);
+
+        // - triangle 2
+        edge1 = pos3 - pos1;
+        edge2 = pos4 - pos1;
+        deltaUV1 = uv3 - uv1;
+        deltaUV2 = uv4 - uv1;
+
+        f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent2 = glm::normalize(tangent2);
+
+
+        bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+        bitangent2 = glm::normalize(bitangent2);
+
+
+        GLfloat quadVertices[] = {
+            // Positions            // normal         // TexCoords  // Tangent                          // Bitangent
+            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+            pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+
+            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+            pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
+        };
+        // Setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(GLfloat), (GLvoid*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(GLfloat), (GLvoid*)(8 * sizeof(GLfloat)));
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(GLfloat), (GLvoid*)(11 * sizeof(GLfloat)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
