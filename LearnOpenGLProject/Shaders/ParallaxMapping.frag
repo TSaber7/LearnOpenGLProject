@@ -18,8 +18,29 @@ uniform bool isParallaxMapping;
 
 vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
 { 
-    float height =  texture(depthMap, texCoords).r;     
-    return texCoords - viewDir.xy  / viewDir.z* (height * heightScale);        
+    // number of depth layers
+    const float numLayers = 10;
+    // calculate the size of each layer
+    float layerDepth = 1.0 / numLayers;
+    // depth of current layer
+    float currentLayerDepth = 0.0;
+    // the amount to shift the texture coordinates per layer (from vector P)
+    vec2 P = viewDir.xy * heightScale; 
+    vec2 deltaTexCoords = P / numLayers;//原文错误
+    // get initial values
+    vec2  currentTexCoords     = texCoords;
+    float currentDepthMapValue = texture(depthMap, currentTexCoords).r;
+
+    while(currentLayerDepth < currentDepthMapValue)
+    {
+        // shift texture coordinates along direction of P
+        currentTexCoords -= deltaTexCoords;
+        // get depthmap value at current texture coordinates
+        currentDepthMapValue = texture(depthMap, currentTexCoords).r;  
+        // get depth of next layer
+        currentLayerDepth += layerDepth;  
+    }
+    return currentTexCoords;//原文错误
 }
 
 void main()
