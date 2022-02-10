@@ -158,9 +158,12 @@ int main()
 #pragma region 载入Texture
     unsigned int cubeTexture = loadTexture("resources/textures/container2.png");
     unsigned int floorTexture = loadTexture("resources/textures/wood.png");
-    GLuint diffuseMap = loadTexture("resources/textures/bricks2.jpg");
-    GLuint normalMap = loadTexture("resources/textures/bricks2_normal.jpg");
-    GLuint heightMap = loadTexture("resources/textures/bricks2_disp.jpg");
+    //GLuint diffuseMap = loadTexture("resources/textures/bricks2.jpg");
+    //GLuint normalMap = loadTexture("resources/textures/bricks2_normal.jpg");
+    //GLuint heightMap = loadTexture("resources/textures/bricks2_disp.jpg");
+      GLuint diffuseMap = loadTexture("resources/textures/toy_box_diffuse.png");
+    GLuint normalMap = loadTexture("resources/textures/toy_box_normal.png");
+    GLuint heightMap = loadTexture("resources/textures/toy_box_disp.png");
 #pragma endregion
 
 
@@ -340,7 +343,7 @@ int main()
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         static bool NormalMapping = true;
         static bool isParallaxMapping = true;
-        static float heightScale = 1.0;
+        static float heightScale = 0.1;
         static glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
         {
             static float f = 0.0f;
