@@ -162,5 +162,7 @@
     <None Include="Shaders\CubeShadowMapping.vert" />
     <None Include="Shaders\normalMapping.vert" />
     <None Include="Shaders\normalMapping.frag" />
+    <None Include="Shaders\ParallaxMapping.vert" />
+    <None Include="Shaders\ParallaxMapping.frag" />
   </ItemGroup>
 </Project>

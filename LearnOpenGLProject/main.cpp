@@ -42,7 +42,7 @@ void renderPlane();
 
 void renderQuad();
 
-void renderQuadWithNormal();
+void renderQuadWithTan();
 
 float alpha = 0;
 #pragma region 设置参数
@@ -152,19 +152,19 @@ int main()
     Shader BlinnPhongShader("Shaders/1.advanced_lighting.vs", "Shaders/1.advanced_lighting.fs");
     Shader lightShader("Shaders/light.vert", "Shaders/light.frag");
     Shader normalMappingShader("Shaders/normalMapping.vert","Shaders/normalMapping.frag");
+    Shader parallaxMappingShader("Shaders/ParallaxMapping.vert", "Shaders/ParallaxMapping.frag");
+
 #pragma endregion
 #pragma region 载入Texture
     unsigned int cubeTexture = loadTexture("resources/textures/container2.png");
     unsigned int floorTexture = loadTexture("resources/textures/wood.png");
-    GLuint diffuseMap = loadTexture("resources/textures/brickwall.jpg");
-    GLuint normalMap = loadTexture("resources/textures/brickwall_normal.jpg");
+    GLuint diffuseMap = loadTexture("resources/textures/bricks2.jpg");
+    GLuint normalMap = loadTexture("resources/textures/bricks2_normal.jpg");
+    GLuint heightMap = loadTexture("resources/textures/bricks2_disp.jpg");
 #pragma endregion
 
 
 
-    // lighting info
-// -------------
-    glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
 
     //模型
     //Model planet("resources/objects/planet/planet.obj");
@@ -339,6 +339,9 @@ int main()
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         static bool NormalMapping = true;
+        static bool isParallaxMapping = true;
+        static float heightScale = 1.0;
+        static glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
         {
             static float f = 0.0f;
             static int counter = 0;
@@ -349,11 +352,13 @@ int main()
             ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
             //ImGui::Checkbox("Another Window", &show_another_window);
 
-            //ImGui::SliderFloat("float", &lightPos.x, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderFloat("heightScale", &heightScale, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::DragFloat3("lightPos", &lightPos.x,0.1f);
             //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
             
             ImGui::Checkbox("Normal Mapping", &NormalMapping);
+            ImGui::Checkbox("Parallax Mapping", &isParallaxMapping);
+
             //if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
             //    counter++;
             //ImGui::SameLine();
@@ -417,22 +422,29 @@ int main()
 #pragma endregion
 
 #pragma region 渲染场景
-        normalMappingShader.use();
-        glm::mat4 model;
-        //model = glm::rotate(model, 180.0f, glm::normalize(glm::vec3(0.0, 1.0, 0.0))); // Rotates the quad to show normal mapping works in all directions
-        normalMappingShader.setMat4("model", model);
-        normalMappingShader.setVec3("lightPos", lightPos);
-        normalMappingShader.setVec3("viewPos", camera.Position);
-        normalMappingShader.setMat4("projection", projection);
-        normalMappingShader.setMat4("view", view);
-        normalMappingShader.setInt("diffuseMap", 0);
-        normalMappingShader.setInt("normalMap", 1);
-        normalMappingShader.setBool("normalMapping", NormalMapping);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuseMap);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, normalMap);
-        renderQuadWithNormal();
+        {
+            parallaxMappingShader.use();
+            glm::mat4 model;
+            //model = glm::rotate(model, 180.0f, glm::normalize(glm::vec3(0.0, 1.0, 0.0))); // Rotates the quad to show normal mapping works in all directions
+            parallaxMappingShader.setMat4("model", model);
+            parallaxMappingShader.setVec3("lightPos", lightPos);
+            parallaxMappingShader.setVec3("viewPos", camera.Position);
+            parallaxMappingShader.setMat4("projection", projection);
+            parallaxMappingShader.setMat4("view", view);
+            parallaxMappingShader.setInt("diffuseMap", 0);
+            parallaxMappingShader.setInt("normalMap", 1);
+            parallaxMappingShader.setInt("depthMap", 2);
+            parallaxMappingShader.setBool("isParallaxMapping", isParallaxMapping);
+            parallaxMappingShader.setFloat("heightScale", heightScale);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, diffuseMap);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, normalMap);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, heightMap);
+            renderQuadWithTan();
+
+        }
 #pragma endregion
 
 #pragma region 渲染天空盒
@@ -869,7 +881,7 @@ void renderQuad()
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
 }
-void renderQuadWithNormal() {
+void renderQuadWithTan() {
     static GLuint quadVAO = 0, quadVBO;
     if (quadVAO == 0)
     {

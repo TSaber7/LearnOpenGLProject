@@ -15,7 +15,8 @@ uniform sampler2D normalMap;
 uniform bool normalMapping;
 
 void main()
-{           
+{    
+    //获取法线
     // Obtain normal from normal map in range [0,1]
     vec3 normal = texture(normalMap, fs_in.TexCoords).rgb;
     // Transform normal vector to range [-1,1]
@@ -23,6 +24,7 @@ void main()
         normal = normalize(normal * 2.0 - 1.0);  // this normal is in tangent space
     else
         normal=vec3(0.0,0.0,1.0);
+    //正常光照计算
     // Get diffuse color
     vec3 color = texture(diffuseMap, fs_in.TexCoords).rgb;
     // Ambient

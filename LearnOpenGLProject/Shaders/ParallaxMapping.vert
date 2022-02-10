@@ -22,18 +22,15 @@ uniform vec3 viewPos;
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(position, 1.0f);
-    vs_out.FragPos = vec3(model * vec4(position, 1.0));   
-    vs_out.TexCoords = texCoords;
-    
-    mat3 normalMatrix = transpose(inverse(mat3(model)));//法线矩阵
-    //利用法线矩阵将TBN变换到世界空间
-    vec3 T = normalize(normalMatrix * tangent);
-    vec3 B = normalize(normalMatrix * bitangent);
-    vec3 N = normalize(normalMatrix * normal);    
-    //TBN求转置即为逆矩阵
-    mat3 TBN = transpose(mat3(T, B, N));  
-    //法线以外的向量统一变换到切线空间
+    gl_Position      = projection * view * model * vec4(position, 1.0f);
+    vs_out.FragPos   = vec3(model * vec4(position, 1.0));   
+    vs_out.TexCoords = texCoords;    
+
+    vec3 T   = normalize(mat3(model) * tangent);
+    vec3 B   = normalize(mat3(model) * bitangent);
+    vec3 N   = normalize(mat3(model) * normal);
+    mat3 TBN = transpose(mat3(T, B, N));
+
     vs_out.TangentLightPos = TBN * lightPos;
     vs_out.TangentViewPos  = TBN * viewPos;
     vs_out.TangentFragPos  = TBN * vs_out.FragPos;
