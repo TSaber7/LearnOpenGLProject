@@ -18,6 +18,7 @@ uniform bool isParallaxMapping;
 
 vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
 { 
+    //根据视角方向调整分层数，倾斜的视角需要更多层
     // number of depth layers
     const float minLayers = 8;
     const float maxLayers = 32;
@@ -62,6 +63,7 @@ void main()
     // offset texture coordinates with Parallax Mapping
     vec3 viewDir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
     vec2 texCoords = fs_in.TexCoords;
+    //利用视差映射获取偏移后的纹理坐标
     if(isParallaxMapping)
         texCoords = ParallaxMapping(fs_in.TexCoords,  viewDir);       
     if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)

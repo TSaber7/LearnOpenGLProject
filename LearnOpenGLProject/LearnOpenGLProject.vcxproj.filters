@@ -164,5 +164,7 @@
     <None Include="Shaders\normalMapping.frag" />
     <None Include="Shaders\ParallaxMapping.vert" />
     <None Include="Shaders\ParallaxMapping.frag" />
+    <None Include="Shaders\lighting.vert" />
+    <None Include="Shaders\lighting.frag" />
   </ItemGroup>
 </Project>
