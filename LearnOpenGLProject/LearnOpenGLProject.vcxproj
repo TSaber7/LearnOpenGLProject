@@ -187,6 +187,10 @@
     <None Include="Shaders\8.green.fs" />
     <None Include="Shaders\8.red.fs" />
     <None Include="Shaders\8.yellow.fs" />
+    <None Include="Shaders\Bloom.frag" />
+    <None Include="Shaders\Bloom.vert" />
+    <None Include="Shaders\Blur.frag" />
+    <None Include="Shaders\Blur.vert" />
     <None Include="Shaders\cube.frag" />
     <None Include="Shaders\CubeDepthShader.frag" />
     <None Include="Shaders\CubeDepthShader.geom" />

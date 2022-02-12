@@ -166,5 +166,9 @@
     <None Include="Shaders\ParallaxMapping.frag" />
     <None Include="Shaders\lighting.vert" />
     <None Include="Shaders\lighting.frag" />
+    <None Include="Shaders\Bloom.vert" />
+    <None Include="Shaders\Bloom.frag" />
+    <None Include="Shaders\Blur.vert" />
+    <None Include="Shaders\Blur.frag" />
   </ItemGroup>
 </Project>

@@ -40,7 +40,7 @@ void renderCube();
 
 void renderPlane();
 
-void renderQuad();
+void RenderQuad();
 
 void renderQuadWithTan();
 
@@ -48,7 +48,7 @@ float alpha = 0;
 #pragma region 设置参数
 
 //设置参数
-int screenWidth = 1920, screenHeight = 1080;
+int SCR_WIDTH = 1920, SCR_HEIGHT = 1080;
 int samples = 4;
 const GLuint SHADOW_WIDTH = 1024*4, SHADOW_HEIGHT = 1024*4;
 
@@ -65,7 +65,7 @@ float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
 
 //追踪光标上一帧位置,初始在屏幕中央
-float lastX = screenWidth / 2, lastY = screenHeight / 2;
+float lastX = SCR_WIDTH / 2, lastY = SCR_HEIGHT / 2;
 
 //防止刚进入窗口时鼠标位置的剧烈变化
 bool firstMouse = true;
@@ -85,7 +85,7 @@ int main()
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
     //创建一个窗口对象
-    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -126,7 +126,7 @@ int main()
 
 
     //设置视口
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 #pragma region 注册回调函数
     //注册回调函数
 
@@ -142,28 +142,35 @@ int main()
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-#pragma region 创建Shader
+
+#pragma region 创建Shader类
     //创建Shader类
-    Shader shader("Shaders/shader.vert", "Shaders/shader.frag");
+    //Shader shader("Shaders/shader.vert", "Shaders/shader.frag");
     //Shader normalShader("Shaders/shader.vert", "Shaders/normalShader.frag", "Shaders/normalShader.geom");
     Shader cubeShader("Shaders/shader.vert", "Shaders/cube.frag");
     Shader screenShader("Shaders/screenShader.vert", "Shaders/screenShader.frag");
     Shader skyboxShader("Shaders/skybox.vert", "Shaders/skybox.frag");
     Shader BlinnPhongShader("Shaders/1.advanced_lighting.vs", "Shaders/1.advanced_lighting.fs");
     Shader lightShader("Shaders/light.vert", "Shaders/light.frag");
-    Shader normalMappingShader("Shaders/normalMapping.vert","Shaders/normalMapping.frag");
+    Shader normalMappingShader("Shaders/normalMapping.vert", "Shaders/normalMapping.frag");
     Shader parallaxMappingShader("Shaders/ParallaxMapping.vert", "Shaders/ParallaxMapping.frag");
-    Shader lightingShader("Shaders/lighting.vert","Shaders/lighting.frag");
+    Shader lightingShader("Shaders/lighting.vert", "Shaders/lighting.frag");
+    Shader BloomShader("Shaders/Bloom.vert","Shaders/Bloom.frag");
+    Shader BlurShader("Shaders/Blur.vert", "Shaders/Blur.frag");
+
 #pragma endregion
+
 #pragma region 载入Texture
     unsigned int cubeTexture = loadTexture("resources/textures/container2.png");
-    unsigned int floorTexture = loadTexture("resources/textures/wood.png");
+    unsigned int woodTexture = loadTexture("resources/textures/wood.png");
     //GLuint diffuseMap = loadTexture("resources/textures/bricks2.jpg");
     //GLuint normalMap = loadTexture("resources/textures/bricks2_normal.jpg");
     //GLuint heightMap = loadTexture("resources/textures/bricks2_disp.jpg");
       GLuint diffuseMap = loadTexture("resources/textures/toy_box_diffuse.png");
     GLuint normalMap = loadTexture("resources/textures/toy_box_normal.png");
     GLuint heightMap = loadTexture("resources/textures/toy_box_disp.png");
+    unsigned int containerTexture = loadTexture("resources/textures/container2.png"); // note that we're loading the texture as an SRGB texture
+
 #pragma endregion
 
 
@@ -243,7 +250,7 @@ int main()
     unsigned int multisampledTexColor;
     glGenTextures(1, &multisampledTexColor);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampledTexColor);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGBA16F, screenWidth, screenHeight, GL_TRUE);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // 将它附加到当前绑定的帧缓冲对象
@@ -253,7 +260,7 @@ int main()
     unsigned int multisampledRBO;
     glGenRenderbuffers(1, &multisampledRBO);
     glBindRenderbuffer(GL_RENDERBUFFER, multisampledRBO);
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, multisampledRBO);
 
@@ -272,7 +279,7 @@ int main()
     unsigned int postProcessingTexColor;
     glGenTextures(1, &postProcessingTexColor);
     glBindTexture(GL_TEXTURE_2D, postProcessingTexColor);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -282,7 +289,7 @@ int main()
     unsigned int postProcessingRBO;
     glGenRenderbuffers(1, &postProcessingRBO);
     glBindRenderbuffer(GL_RENDERBUFFER, postProcessingRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, postProcessingRBO);
 
@@ -291,9 +298,51 @@ int main()
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #pragma endregion
-
-    
-
+    //泛光帧缓冲
+    GLuint bloomFBO;
+    GLuint colorBuffers[2];
+    {
+        glGenFramebuffers(1, &bloomFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, bloomFBO);
+        glGenTextures(2, colorBuffers);
+        for (GLuint i = 0; i < 2; i++)
+        {
+            glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
+            glTexImage2D(
+                GL_TEXTURE_2D, 0, GL_RGB16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL
+            );
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            // attach texture to framebuffer
+            glFramebufferTexture2D(
+                GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0
+            );
+        }
+    }
+    //水平竖直高斯模糊帧缓冲
+    GLuint pingpongFBO[2];
+    GLuint pingpongBuffer[2];
+    {
+        glGenFramebuffers(2, pingpongFBO);
+        glGenTextures(2, pingpongBuffer);
+        for (GLuint i = 0; i < 2; i++)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+            glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
+            glTexImage2D(
+                GL_TEXTURE_2D, 0, GL_RGB16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL
+            );
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glFramebufferTexture2D(
+                GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0
+            );
+        }
+    }
 #pragma endregion
 
     
@@ -325,16 +374,15 @@ int main()
     // Light sources
 // - Positions
     std::vector<glm::vec3> lightPositions;
-    lightPositions.push_back(glm::vec3(0.0f, 0.0f, 49.5f)); // back light
-    lightPositions.push_back(glm::vec3(-1.4f, -1.9f, 9.0f));
-    lightPositions.push_back(glm::vec3(0.0f, -1.8f, 4.0f));
-    lightPositions.push_back(glm::vec3(0.8f, -1.7f, 6.0f));
-    // - Colors
+    lightPositions.push_back(glm::vec3(0.0f, 0.5f, 1.5f));
+    lightPositions.push_back(glm::vec3(-4.0f, 0.5f, -3.0f));
+    lightPositions.push_back(glm::vec3(3.0f, 0.5f, 1.0f));
+    lightPositions.push_back(glm::vec3(-.8f, 2.4f, -1.0f));    // - Colors
     std::vector<glm::vec3> lightColors;
-    lightColors.push_back(glm::vec3(200.0f, 200.0f, 200.0f));
-    lightColors.push_back(glm::vec3(0.1f, 0.0f, 0.0f));
-    lightColors.push_back(glm::vec3(0.0f, 0.0f, 0.2f));
-    lightColors.push_back(glm::vec3(0.0f, 0.1f, 0.0f));
+    lightColors.push_back(glm::vec3(5.0f, 5.0f, 5.0f));
+    lightColors.push_back(glm::vec3(10.0f, 0.0f, 0.0f));
+    lightColors.push_back(glm::vec3(0.0f, 0.0f, 15.0f));
+    lightColors.push_back(glm::vec3(0.0f, 5.0f, 0.0f));
 
 #pragma region 渲染循环
     while (!glfwWindowShouldClose(window))
@@ -408,7 +456,7 @@ int main()
 
         //设置投影矩阵
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / screenHeight, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 100.0f);
 
 #pragma endregion
 #pragma region 光源VP矩阵
@@ -420,7 +468,7 @@ int main()
 
 
 #pragma region 渲染到多重采样帧缓冲
-        glViewport(0, 0, screenWidth, screenHeight);
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
         //渲染到帧缓冲
 // 第一处理阶段(Pass)
@@ -433,16 +481,27 @@ int main()
 
 
 #pragma region 渲染光源位置
-        lightShader.use();
-        lightShader.setMat4("projection", projection);
-        lightShader.setMat4("view", view);
-        glm::mat4 lightModel= glm::translate(glm::mat4(1.0f), lightPos);
-        lightModel = glm::scale(lightModel, glm::vec3(0.2f));
-        lightShader.setMat4("model", lightModel);
-        renderCube();
+        //渲染光源
+        {
+            glm::mat4 model;
+            lightShader.use();
+            lightShader.setMat4("projection", projection);
+            lightShader.setMat4("view", view);
+            for (unsigned int i = 0; i < lightPositions.size(); i++)
+            {
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, glm::vec3(lightPositions[i]));
+                model = glm::scale(model, glm::vec3(0.25f));
+                lightShader.setMat4("model", model);
+                lightShader.setVec3("lightColor", lightColors[i]);
+                renderCube();
+            }
+
+        }
 #pragma endregion
 
 #pragma region 渲染场景
+        //渲染场景
         {
             lightingShader.use();
             glm::mat4 model;
@@ -459,14 +518,51 @@ int main()
                 glUniform3fv(glGetUniformLocation(lightingShader.Program, ("lights[" + std::to_string(i) + "].Color").c_str()), 1, &lightColors[i][0]);
             }
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, floorTexture);
-            // - render tunnel
-            model = glm::mat4();
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 25.0));
-            model = glm::scale(model, glm::vec3(5.0f, 5.0f, 55.0f));
-            glUniformMatrix4fv(glGetUniformLocation(lightingShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-            lightingShader.setBool("inverse_normals", true);
+            glBindTexture(GL_TEXTURE_2D, woodTexture);
+            
+            // create one large cube that acts as the floor
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0));
+            model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
+            lightingShader.setMat4("model", model);
+            renderCube();
+            // then create multiple cubes as the scenery
+            glBindTexture(GL_TEXTURE_2D, containerTexture);
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
+            model = glm::scale(model, glm::vec3(0.5f));
+            lightingShader.setMat4("model", model);
+            renderCube();
 
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0));
+            model = glm::scale(model, glm::vec3(0.5f));
+            lightingShader.setMat4("model", model);
+            renderCube();
+
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(-1.0f, -1.0f, 2.0));
+            model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
+            lightingShader.setMat4("model", model);
+            renderCube();
+
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 2.7f, 4.0));
+            model = glm::rotate(model, glm::radians(23.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
+            model = glm::scale(model, glm::vec3(1.25));
+            lightingShader.setMat4("model", model);
+            renderCube();
+
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(-2.0f, 1.0f, -3.0));
+            model = glm::rotate(model, glm::radians(124.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
+            lightingShader.setMat4("model", model);
+            renderCube();
+
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0));
+            model = glm::scale(model, glm::vec3(0.5f));
+            lightingShader.setMat4("model", model);
             renderCube();
 
         }
@@ -501,30 +597,69 @@ int main()
 
 #pragma endregion
 
-#pragma region 传送到后处理帧缓冲并渲染到屏幕
-        // 第二处理阶段
+
+        // 传送到后处理帧缓冲
         glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, postProcessingFBO);
-        glBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        //渲染到泛光帧缓冲，提取出普通渲染图像和亮区图像
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, bloomFBO); // 返回默认
+            GLuint attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+            glDrawBuffers(2, attachments);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); // 返回默认
-        glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            //todo 泛光shader
+            BloomShader.use();
+            BloomShader.setInt("screenTexture", 0);
+            glDisable(GL_DEPTH_TEST);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, postProcessingTexColor);
+            RenderQuad();
 
-        screenShader.use();
-        screenShader.setInt("screenTexture", 0);
-        screenShader.setFloat("exposure", exposure);
-        glDisable(GL_DEPTH_TEST);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, postProcessingTexColor);
-        renderQuad();
+        }
+        //水平竖直双向高斯模糊
+        {
+            GLboolean horizontal = true, first_iteration = true;
+            GLuint amount = 10;
+            BlurShader.use();
+            BlurShader.setInt("image", 0);
+            glActiveTexture(GL_TEXTURE0);
+            for (GLuint i = 0; i < amount; i++)
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+                glUniform1i(glGetUniformLocation(BlurShader.Program, "horizontal"), horizontal);
+                glBindTexture(
+                    GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongBuffer[!horizontal]
+                );
+                RenderQuad();
+                horizontal = !horizontal;
+                if (first_iteration)
+                    first_iteration = false;
+            }
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+        //渲染到默认帧缓冲
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0); // 返回默认
+            glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        //glActiveTexture(GL_TEXTURE1);
+            screenShader.use();
+            screenShader.setInt("scene", 0);
+            screenShader.setInt("bloomBlur", 1);
 
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
+            screenShader.setFloat("exposure", exposure);
+            glDisable(GL_DEPTH_TEST);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, pingpongBuffer[0]);
 
-#pragma endregion
+            RenderQuad();
+
+        }
 
 
 #pragma region ImGUIRendering
@@ -710,34 +845,8 @@ unsigned int loadCubemap(vector<std::string> faces)
 
 void renderScene( Shader& shader)
 {
-    static Model nanosuit("resources/objects/nanosuit/nanosuit.obj");
-    shader.use();
-    // floor
-    glm::mat4 model = glm::mat4(1.0f);
-    shader.setMat4("model", model);
-    renderPlane();    // cubes
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
-    model = glm::scale(model, glm::vec3(0.5f));
-    shader.setMat4("model", model);
-    renderCube();
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0));
-    model = glm::scale(model, glm::vec3(0.5f));
-    shader.setMat4("model", model);
-    renderCube();
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(-1.0f, 0.0f, 2.0));
-    model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
-    model = glm::scale(model, glm::vec3(0.25));
-    shader.setMat4("model", model);
-    renderCube();
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(3.0f, -0.5f, -2.0));
-    model = glm::rotate(model, glm::radians(-90.0f), glm::normalize(glm::vec3(0.0, 1.0, 0.0)));
-    model = glm::scale(model, glm::vec3(0.2f));
-    shader.setMat4("model", model);
-    nanosuit.Draw(shader);
+    glm::mat4 model;
+    
 }
 void renderSceneCubeSM(Shader& shader) {
     // Room cube
@@ -782,48 +891,48 @@ void renderCube()
     if (cubeVAO == 0)
     {
         GLfloat vertices[] = {
-            // Back face
-            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, // Bottom-left
-            0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f, // top-right
-            0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
-            0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,  // top-right
-            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,  // bottom-left
-            -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,// top-left
-            // Front face
-            -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom-left
-            0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // bottom-right
-            0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,  // top-right
-            0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, // top-right
-            -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // top-left
-            -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom-left
-            // Left face
-            -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // top-right
-            -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top-left
-            -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // bottom-left
-            -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // bottom-left
-            -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // bottom-right
-            -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // top-right
-            // Right face
-            0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // top-left
-            0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // bottom-right
-            0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top-right         
-            0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // bottom-right
-            0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,  // top-left
-            0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // bottom-left     
-            // Bottom face
-            -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, // top-right
-            0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f, // top-left
-            0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,// bottom-left
-            0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, // bottom-left
-            -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, // bottom-right
-            -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, // top-right
-            // Top face
-            -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,// top-left
-            0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom-right
-            0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, // top-right     
-            0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom-right
-            -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,// top-left
-            -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f // bottom-left        
+            // back face
+            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+             1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+             1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
+             1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+            -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+            // front face
+            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+             1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+             1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+             1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+            -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+            // left face
+            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+            -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+            -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+            // right face
+             1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+             1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+             1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
+             1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+             1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+             1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
+            // bottom face
+            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+             1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+             1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+             1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+            -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+            // top face
+            -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+             1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+             1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
+             1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+            -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+            -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left              
         };
         glGenVertexArrays(1, &cubeVAO);
         glGenBuffers(1, &cubeVBO);
@@ -879,7 +988,7 @@ void renderPlane() {
     glBindVertexArray(0);
 
 }
-void renderQuad()
+void RenderQuad()
 {
     static unsigned int quadVAO = 0, quadVBO = 0;
     if (quadVAO == 0)
