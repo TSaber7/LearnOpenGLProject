@@ -170,5 +170,9 @@
     <None Include="Shaders\Bloom.frag" />
     <None Include="Shaders\Blur.vert" />
     <None Include="Shaders\Blur.frag" />
+    <None Include="Shaders\g_buffer.vert" />
+    <None Include="Shaders\g_buffer.frag" />
+    <None Include="Shaders\deferred_shading.vert" />
+    <None Include="Shaders\deferred_shading.frag" />
   </ItemGroup>
 </Project>

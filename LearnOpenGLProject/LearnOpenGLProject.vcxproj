@@ -197,7 +197,11 @@
     <None Include="Shaders\CubeDepthShader.vert" />
     <None Include="Shaders\CubeShadowMapping.frag" />
     <None Include="Shaders\CubeShadowMapping.vert" />
+    <None Include="Shaders\deferred_shading.frag" />
+    <None Include="Shaders\deferred_shading.vert" />
     <None Include="Shaders\explodeShader.geom" />
+    <None Include="Shaders\g_buffer.frag" />
+    <None Include="Shaders\g_buffer.vert" />
     <None Include="Shaders\light.frag" />
     <None Include="Shaders\light.geom" />
     <None Include="Shaders\light.vert" />
