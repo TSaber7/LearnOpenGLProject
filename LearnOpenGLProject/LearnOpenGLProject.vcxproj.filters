@@ -174,5 +174,9 @@
     <None Include="Shaders\g_buffer.frag" />
     <None Include="Shaders\deferred_shading.vert" />
     <None Include="Shaders\deferred_shading.frag" />
+    <None Include="Shaders\SSAO.vert" />
+    <None Include="Shaders\SSAO.frag" />
+    <None Include="Shaders\SSAOBlur.vert" />
+    <None Include="Shaders\SSAOBlur.frag" />
   </ItemGroup>
 </Project>

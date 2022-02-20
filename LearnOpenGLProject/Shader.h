@@ -111,7 +111,7 @@ public:
 		return shader;
 
 	}
-    void use()
+    void Use()
     {
         glUseProgram(Program);
     }

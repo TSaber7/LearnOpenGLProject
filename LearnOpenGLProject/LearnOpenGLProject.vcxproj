@@ -232,6 +232,10 @@
     <None Include="Shaders\simpleDepthShader.vert" />
     <None Include="Shaders\skybox.frag" />
     <None Include="Shaders\skybox.vert" />
+    <None Include="Shaders\SSAO.frag" />
+    <None Include="Shaders\SSAO.vert" />
+    <None Include="Shaders\SSAOBlur.frag" />
+    <None Include="Shaders\SSAOBlur.vert" />
     <None Include="zlib.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
