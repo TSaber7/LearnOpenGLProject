@@ -213,6 +213,8 @@
     <None Include="Shaders\normalShader.geom" />
     <None Include="Shaders\ParallaxMapping.frag" />
     <None Include="Shaders\ParallaxMapping.vert" />
+    <None Include="Shaders\PBR.frag" />
+    <None Include="Shaders\PBR.vert" />
     <None Include="Shaders\pointShader.frag" />
     <None Include="Shaders\pointShader.vert" />
     <None Include="Shaders\quadInstance.frag" />

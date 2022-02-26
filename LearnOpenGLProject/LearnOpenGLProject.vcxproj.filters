@@ -178,5 +178,7 @@
     <None Include="Shaders\SSAO.frag" />
     <None Include="Shaders\SSAOBlur.vert" />
     <None Include="Shaders\SSAOBlur.frag" />
+    <None Include="Shaders\PBR.vert" />
+    <None Include="Shaders\PBR.frag" />
   </ItemGroup>
 </Project>
