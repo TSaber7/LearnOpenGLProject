@@ -180,5 +180,7 @@
     <None Include="Shaders\SSAOBlur.frag" />
     <None Include="Shaders\PBR.vert" />
     <None Include="Shaders\PBR.frag" />
+    <None Include="Shaders\PBRTexture.vert" />
+    <None Include="Shaders\PBRTexture.frag" />
   </ItemGroup>
 </Project>

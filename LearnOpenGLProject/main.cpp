@@ -185,6 +185,14 @@ int main()
         objectPositions.push_back(glm::vec3(3.0, -3.0, 3.0));
     }
 
+    // load PBR material textures
+    // --------------------------
+    unsigned int albedo = loadTexture("resources/textures/pbr/rusted_iron/albedo.png");
+    unsigned int normal = loadTexture("resources/textures/pbr/rusted_iron/normal.png");
+    unsigned int metallic = loadTexture("resources/textures/pbr/rusted_iron/metallic.png");
+    unsigned int roughness = loadTexture("resources/textures/pbr/rusted_iron/roughness.png");
+    unsigned int ao = loadTexture("resources/textures/pbr/rusted_iron/ao.png");
+
     //光源
     const GLuint NR_LIGHTS = 1;
     glm::vec3 lightPositions[] = {
@@ -335,6 +343,11 @@ int main()
         Shader skyboxShader("Shaders/skybox.vert", "Shaders/skybox.frag");
         Shader BlinnPhongShader("Shaders/1.advanced_lighting.vs", "Shaders/1.advanced_lighting.fs");
         Shader lightShader("Shaders/light.vert", "Shaders/light.frag");
+        {
+            lightShader.Use();
+            lightShader.setMat4("projection", projection);
+            lightShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        }
         Shader lightingShader("Shaders/lighting.vert", "Shaders/lighting.frag");
         Shader BlurShader("Shaders/Blur.vert", "Shaders/Blur.frag");
         Shader shaderGeometryPass("Shaders/g_buffer.vert", "Shaders/g_buffer.frag");
@@ -347,6 +360,18 @@ int main()
             PBRShader.setVec3("albedo", 0.5f, 0.0f, 0.0f);
             PBRShader.setFloat("ao", 1.0f);
             PBRShader.setMat4("projection", projection);
+
+        }
+        Shader PBRTextureShader("Shaders/PBRTexture.vert", "Shaders/PBRTexture.frag");
+        {
+            PBRTextureShader.Use();
+            PBRTextureShader.setInt("albedoMap", 0);
+            PBRTextureShader.setInt("normalMap", 1);
+            PBRTextureShader.setInt("metallicMap", 2);
+            PBRTextureShader.setInt("roughnessMap", 3);
+            PBRTextureShader.setInt("aoMap", 4);
+            PBRTextureShader.setMat4("projection", projection);
+
         }
 #pragma endregion
 #pragma region 渲染循环
@@ -442,22 +467,27 @@ int main()
         // render light source (simply re-render sphere at light positions)
         // this looks a bit off as we use the same shader, but it'll make their positions obvious and 
         // keeps the codeprint small.
-        PBRShader.Use();
         glm::mat4 model = glm::mat4(1.0f);
         for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
         {
             glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, 0.0);
             newPos = lightPositions[i];
+            PBRShader.Use();
             PBRShader.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
             PBRShader.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+            PBRTextureShader.Use();
+            PBRTextureShader.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
+            PBRTextureShader.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
 
+            lightShader.Use();
             model = glm::mat4(1.0f);
             model = glm::translate(model, newPos);
             model = glm::scale(model, glm::vec3(0.5f));
-            PBRShader.setMat4("model", model);
+            lightShader.setMat4("model", model);
+            lightShader.setMat4("view", view);
             renderSphere();
         }
-
+        PBRShader.Use();
         PBRShader.setVec3("camPos",camera.Position);
         PBRShader.setMat4("view", view);
         // render rows*column number of spheres with varying metallic/roughness values scaled by rows and columns respectively
@@ -470,6 +500,8 @@ int main()
             PBRShader.setFloat("metallic", (float)row / (float)nrRows);
             for (int col = 0; col < nrColumns; ++col)
             {
+                if (col == nrColumns / 2 && row == nrRows / 2)
+                    continue;
                 // we clamp the roughness to 0.05 - 1.0 as perfectly smooth surfaces (roughness of 0.0) tend to look a bit off
                 // on direct lighting.
                 PBRShader.setFloat("roughness", glm::clamp((float)col / (float)nrColumns, 0.05f, 1.0f));
@@ -485,9 +517,24 @@ int main()
             }
         }
 
+        PBRTextureShader.Use();
+        PBRTextureShader.setVec3("camPos", camera.Position);
+        PBRTextureShader.setMat4("view", view);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f,0.0f,0.0f));
+        PBRTextureShader.setMat4("model", model);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, albedo);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, normal);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, metallic);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, roughness);
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D, ao);
+        renderSphere();
 
-
-        
 
         //渲染天空盒
         if (isSkybox) {
