@@ -193,6 +193,31 @@ int main()
     unsigned int roughness = loadTexture("resources/textures/pbr/rusted_iron/roughness.png");
     unsigned int ao = loadTexture("resources/textures/pbr/rusted_iron/ao.png");
 
+    //加载hdr环境贴图
+    unsigned int hdrTexture;
+    {
+        stbi_set_flip_vertically_on_load(true);
+        int width, height, nrComponents;
+        float* data = stbi_loadf("resources/textures/hdr/newport_loft.hdr", &width, &height, &nrComponents, 0);
+        if (data)
+        {
+            glGenTextures(1, &hdrTexture);
+            glBindTexture(GL_TEXTURE_2D, hdrTexture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Failed to load HDR image." << std::endl;
+        }
+
+    }
     //光源
     const GLuint NR_LIGHTS = 1;
     glm::vec3 lightPositions[] = {
@@ -328,6 +353,54 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
+        //记录捕获的立方体贴图
+        unsigned int captureFBO, captureRBO;
+        {
+            glGenFramebuffers(1, &captureFBO);
+            glGenRenderbuffers(1, &captureRBO);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+            glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
+
+        }
+
+        //创建立方体贴图
+        unsigned int envCubemap;
+        {
+            glGenTextures(1, &envCubemap);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+            for (unsigned int i = 0; i < 6; ++i)
+            {
+                // note that we store each face with 16 bit floating point values
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
+                    512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
+            }
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        }
+        //创建irradiance卷积立方体贴图
+        unsigned int irradianceMap;
+        {
+            glGenTextures(1, &irradianceMap);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+            for (unsigned int i = 0; i < 6; ++i)
+            {
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0,
+                    GL_RGB, GL_FLOAT, nullptr);
+            }
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        }
 
         //设置投影矩阵
         glm::mat4 projection;
@@ -360,7 +433,7 @@ int main()
             PBRShader.setVec3("albedo", 0.5f, 0.0f, 0.0f);
             PBRShader.setFloat("ao", 1.0f);
             PBRShader.setMat4("projection", projection);
-
+            PBRShader.setInt("irradianceMap", 5);
         }
         Shader PBRTextureShader("Shaders/PBRTexture.vert", "Shaders/PBRTexture.frag");
         {
@@ -370,10 +443,84 @@ int main()
             PBRTextureShader.setInt("metallicMap", 2);
             PBRTextureShader.setInt("roughnessMap", 3);
             PBRTextureShader.setInt("aoMap", 4);
+            PBRTextureShader.setInt("irradianceMap", 5);
             PBRTextureShader.setMat4("projection", projection);
 
         }
+        Shader ToCubeMapShader("Shaders/ToCubeMap.vert", "Shaders/ToCubeMap.frag");
+        {
+            ToCubeMapShader.Use();
+            ToCubeMapShader.setInt("equirectangularMap", 0);
+            ToCubeMapShader.setMat4("projection", projection);
+
+        }
+        Shader irradianceShader("Shaders/irradiance_convolution.vert", "Shaders/irradiance_convolution.frag");
+        {
+            irradianceShader.Use();
+            irradianceShader.setInt("equirectangularMap", 0);
+            irradianceShader.setMat4("projection", projection);
+
+        }
+
+
+
 #pragma endregion
+        //渲染到立方体贴图
+        {
+            glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+            glm::mat4 captureViews[] =
+            {
+               glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+               glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+               glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+               glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+               glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+               glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+            };
+            ToCubeMapShader.Use();
+            ToCubeMapShader.setVec3("camPos", camera.Position);
+            ToCubeMapShader.setMat4("projection", captureProjection);
+
+            glm::mat4 model = glm::mat4(1.0f);
+            ToCubeMapShader.setMat4("model", model);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, hdrTexture);
+            glViewport(0, 0, 512, 512);
+            glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+            for (unsigned int i = 0; i < 6; ++i)
+            {
+                ToCubeMapShader.setMat4("view", captureViews[i]);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                renderCube(); // renders a 1x1 cube
+            }
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            //irradiance卷积贴图
+            glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+            glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
+            irradianceShader.Use();
+            irradianceShader.setMat4("projection", captureProjection);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+
+            glViewport(0, 0, 32, 32); // don't forget to configure the viewport to the capture dimensions.
+            glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+            for (unsigned int i = 0; i < 6; ++i)
+            {
+                irradianceShader.setMat4("view", captureViews[i]);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                renderCube();
+            }
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+        
 #pragma region 渲染循环
     while (!glfwWindowShouldClose(window))
     {
@@ -396,7 +543,7 @@ int main()
         
         //绑定变量到GUI
         static glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
-        static bool isSkybox = false;
+        static bool isSkybox = true;
         static float rotModel = -90.0f;
         static float floorY = -2.0f;
         {
@@ -452,8 +599,7 @@ int main()
 
 #pragma endregion
 
-
-#pragma region 渲染到几何帧缓冲
+        //渲染场景
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
         //渲染到帧缓冲
@@ -533,6 +679,13 @@ int main()
         glBindTexture(GL_TEXTURE_2D, roughness);
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, ao);
+        glActiveTexture(GL_TEXTURE5);
+        if (isSkybox)
+            glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+        else
+            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+
         renderSphere();
 
 
@@ -549,7 +702,7 @@ int main()
 
             glBindVertexArray(skyboxVAO);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexture);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
             glDrawArrays(GL_TRIANGLES, 0, 36);
             glDepthMask(GL_TRUE);
 
@@ -563,10 +716,6 @@ int main()
 
         }
 
-
-
-
-#pragma endregion
 
 
 #pragma region ImGUIRendering

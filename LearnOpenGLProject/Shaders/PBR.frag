@@ -10,6 +10,7 @@ uniform vec3  albedo;
 uniform float metallic;
 uniform float roughness;
 uniform float ao;
+uniform samplerCube irradianceMap;
 
 // lights
 uniform vec3 lightPositions[4];
@@ -58,6 +59,9 @@ void main()
     vec3 N = normalize(Normal); 
     vec3 V = normalize(camPos - WorldPos);
     vec3 Lo = vec3(0.0);
+    vec3 F0 = vec3(0.04); 
+    F0      = mix(F0, albedo, metallic);
+
     for(int i = 0; i < 4; ++i) 
     {
         vec3 L = normalize(lightPositions[i] - WorldPos);
@@ -67,8 +71,7 @@ void main()
         float attenuation = 1.0 / (distance * distance);
         vec3 radiance     = lightColors[i] * attenuation; 
         
-        vec3 F0 = vec3(0.04); 
-        F0      = mix(F0, albedo, metallic);
+        
         vec3 F  = fresnelSchlick(max(dot(H, L), 0.0), F0);
 
         float NDF = DistributionGGX(N, H, roughness);       
@@ -86,7 +89,13 @@ void main()
         float NdotL = max(dot(N, L), 0.0);        
         Lo += (kD * albedo / PI + specular) * radiance * NdotL;
     }
-    vec3 ambient = vec3(0.03) * albedo * ao;
+
+    vec3 kS = fresnelSchlick(max(dot(N, V), 0.0), F0);
+    vec3 kD = 1.0 - kS;
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse    = irradiance * albedo;
+    vec3 ambient    = (kD * diffuse) * ao; 
+
     vec3 color   = ambient + Lo;  
 
     color = color / (color + vec3(1.0));

@@ -182,5 +182,9 @@
     <None Include="Shaders\PBR.frag" />
     <None Include="Shaders\PBRTexture.vert" />
     <None Include="Shaders\PBRTexture.frag" />
+    <None Include="Shaders\ToCubeMap.vert" />
+    <None Include="Shaders\ToCubeMap.frag" />
+    <None Include="Shaders\irradiance_convolution.frag" />
+    <None Include="Shaders\irradiance_convolution.vert" />
   </ItemGroup>
 </Project>
