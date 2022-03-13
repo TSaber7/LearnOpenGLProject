@@ -187,11 +187,11 @@ int main()
 
     // load PBR material textures
     // --------------------------
-    unsigned int albedo = loadTexture("resources/textures/pbr/rusted_iron/albedo.png");
-    unsigned int normal = loadTexture("resources/textures/pbr/rusted_iron/normal.png");
-    unsigned int metallic = loadTexture("resources/textures/pbr/rusted_iron/metallic.png");
-    unsigned int roughness = loadTexture("resources/textures/pbr/rusted_iron/roughness.png");
-    unsigned int ao = loadTexture("resources/textures/pbr/rusted_iron/ao.png");
+    unsigned int albedo = loadTexture("resources/textures/pbr/plastic/albedo.png");
+    unsigned int normal = loadTexture("resources/textures/pbr/plastic/normal.png");
+    unsigned int metallic = loadTexture("resources/textures/pbr/plastic/metallic.png");
+    unsigned int roughness = loadTexture("resources/textures/pbr/plastic/roughness.png");
+    unsigned int ao = loadTexture("resources/textures/pbr/plastic/ao.png");
 
     //加载hdr环境贴图
     unsigned int hdrTexture;
@@ -402,6 +402,39 @@ int main()
 
         }
 
+        //创建预滤波HDR环境贴图
+        unsigned int prefilterMap;
+        {
+            glGenTextures(1, &prefilterMap);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+            for (unsigned int i = 0; i < 6; ++i) {
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, nullptr);
+            }
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+        }
+
+        //创建预计算BRDF纹理
+        unsigned int brdfLUTTexture;
+        {
+            glGenTextures(1, &brdfLUTTexture);
+
+            // pre-allocate enough memory for the LUT texture.
+            glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        }
+
         //设置投影矩阵
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 50.0f);
@@ -444,6 +477,9 @@ int main()
             PBRTextureShader.setInt("roughnessMap", 3);
             PBRTextureShader.setInt("aoMap", 4);
             PBRTextureShader.setInt("irradianceMap", 5);
+            PBRTextureShader.setInt("prefilterMap", 6);
+            PBRTextureShader.setInt("brdfLUT", 7);
+
             PBRTextureShader.setMat4("projection", projection);
 
         }
@@ -461,12 +497,24 @@ int main()
             irradianceShader.setMat4("projection", projection);
 
         }
+        Shader prefilterShader("Shaders/prefilter.vert", "Shaders/prefilter.frag");
+        {
+            prefilterShader.Use();
+            prefilterShader.setInt("environmentMap", 0);
+            prefilterShader.setMat4("projection", projection);
 
+        }
+        Shader BRDFShader("Shaders/preBRDF.vert", "Shaders/preBRDF.frag");
+        {
+            BRDFShader.Use();
+
+        }
 
 
 #pragma endregion
-        //渲染到立方体贴图
+        //预渲染到立方体贴图
         {
+            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
             glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
             glm::mat4 captureViews[] =
             {
@@ -519,6 +567,50 @@ int main()
                 renderCube();
             }
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            prefilterShader.Use();
+            prefilterShader.setInt("environmentMap", 0);
+            prefilterShader.setMat4("projection", captureProjection);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+            unsigned int maxMipLevels = 5;
+            for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
+            {
+                // reisze framebuffer according to mip-level size.
+                unsigned int mipWidth = 128 * std::pow(0.5, mip);
+                unsigned int mipHeight = 128 * std::pow(0.5, mip);
+                glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+                glViewport(0, 0, mipWidth, mipHeight);
+
+                float roughness = (float)mip / (float)(maxMipLevels - 1);
+                prefilterShader.setFloat("roughness", roughness);
+                for (unsigned int i = 0; i < 6; ++i)
+                {
+                    prefilterShader.setMat4("view", captureViews[i]);
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                        GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterMap, mip);
+
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                    renderCube();
+                }
+            }
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            //预计算BRDF
+            glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+            glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
+
+            glViewport(0, 0, 512, 512);
+            BRDFShader.Use();
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            RenderQuad();
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         
 #pragma region 渲染循环
@@ -546,6 +638,7 @@ int main()
         static bool isSkybox = true;
         static float rotModel = -90.0f;
         static float floorY = -2.0f;
+        static float mipLevel = 0;
         {
             static float f = 0.0f;
             static int counter = 0;
@@ -563,6 +656,7 @@ int main()
             //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
             
             ImGui::Checkbox("Skybox", &isSkybox);
+            ImGui::SliderFloat("mipLevel", &mipLevel, 0.0f, 4.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
             //if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
             //    counter++;
@@ -684,6 +778,10 @@ int main()
             glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
         else
             glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+        glActiveTexture(GL_TEXTURE7);
+        glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
 
 
         renderSphere();
@@ -699,10 +797,10 @@ int main()
             glm::mat4 viewRot = glm::mat4(glm::mat3(view));
             skyboxShader.setMat4("view", viewRot);
             skyboxShader.setMat4("projection", projection);
-
+            skyboxShader.setFloat("mipLevel", mipLevel);
             glBindVertexArray(skyboxVAO);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
             glDrawArrays(GL_TRIANGLES, 0, 36);
             glDepthMask(GL_TRUE);
 

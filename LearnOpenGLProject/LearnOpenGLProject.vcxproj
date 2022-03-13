@@ -221,6 +221,10 @@
     <None Include="Shaders\PBRTexture.vert" />
     <None Include="Shaders\pointShader.frag" />
     <None Include="Shaders\pointShader.vert" />
+    <None Include="Shaders\preBRDF.frag" />
+    <None Include="Shaders\preBRDF.vert" />
+    <None Include="Shaders\prefilter.frag" />
+    <None Include="Shaders\prefilter.vert" />
     <None Include="Shaders\quadInstance.frag" />
     <None Include="Shaders\quadInstance.vert" />
     <None Include="Shaders\rockIns.vert" />

@@ -186,5 +186,9 @@
     <None Include="Shaders\ToCubeMap.frag" />
     <None Include="Shaders\irradiance_convolution.frag" />
     <None Include="Shaders\irradiance_convolution.vert" />
+    <None Include="Shaders\prefilter.vert" />
+    <None Include="Shaders\prefilter.frag" />
+    <None Include="Shaders\preBRDF.frag" />
+    <None Include="Shaders\preBRDF.vert" />
   </ItemGroup>
 </Project>
