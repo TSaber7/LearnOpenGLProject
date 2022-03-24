@@ -24,6 +24,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
+#define PI 3.14159265359f
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -77,6 +78,9 @@ bool firstMouse = true;
 bool enableViewRot = false;
 
 ImGuiIO* io;
+
+bool isChange = true;
+int oldHdrEnv = -1;
 GLfloat lerp(GLfloat a, GLfloat b, GLfloat f)
 {
     return a + f * (b - a);
@@ -171,38 +175,27 @@ int main()
     //模型
     //Model planet("resources/objects/planet/planet.obj");
     //Model rock("resources/objects/rock/rock.obj");
-    Model nanosuit("resources/objects/nanosuit/nanosuit.obj");
-    std::vector<glm::vec3> objectPositions;
-    {
-        objectPositions.push_back(glm::vec3(-3.0, -3.0, -3.0));
-        objectPositions.push_back(glm::vec3(0.0, -3.0, -3.0));
-        objectPositions.push_back(glm::vec3(3.0, -3.0, -3.0));
-        objectPositions.push_back(glm::vec3(-3.0, -3.0, 0.0));
-        objectPositions.push_back(glm::vec3(0.0, -3.0, 0.0));
-        objectPositions.push_back(glm::vec3(3.0, -3.0, 0.0));
-        objectPositions.push_back(glm::vec3(-3.0, -3.0, 3.0));
-        objectPositions.push_back(glm::vec3(0.0, -3.0, 3.0));
-        objectPositions.push_back(glm::vec3(3.0, -3.0, 3.0));
-    }
+    Model gun("resources/Cerberus_by_Andrew_Maximov/Cerberus_LP.FBX");
 
     // load PBR material textures
     // --------------------------
-    unsigned int albedo = loadTexture("resources/textures/pbr/plastic/albedo.png");
-    unsigned int normal = loadTexture("resources/textures/pbr/plastic/normal.png");
-    unsigned int metallic = loadTexture("resources/textures/pbr/plastic/metallic.png");
-    unsigned int roughness = loadTexture("resources/textures/pbr/plastic/roughness.png");
-    unsigned int ao = loadTexture("resources/textures/pbr/plastic/ao.png");
+    unsigned int albedo = loadTexture("resources/Cerberus_by_Andrew_Maximov/Textures/Cerberus_A.tga");
+    unsigned int normal = loadTexture("resources/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
+    unsigned int metallic = loadTexture("resources/Cerberus_by_Andrew_Maximov/Textures/Cerberus_M.tga");
+    unsigned int roughness = loadTexture("resources/Cerberus_by_Andrew_Maximov/Textures/Cerberus_R.tga");
+    unsigned int ao = loadTexture("resources/Cerberus_by_Andrew_Maximov/Textures/Raw/Cerberus_AO.tga");
+
 
     //加载hdr环境贴图
-    unsigned int hdrTexture;
+    unsigned int hdrTexture0;
     {
         stbi_set_flip_vertically_on_load(true);
         int width, height, nrComponents;
         float* data = stbi_loadf("resources/textures/hdr/newport_loft.hdr", &width, &height, &nrComponents, 0);
         if (data)
         {
-            glGenTextures(1, &hdrTexture);
-            glBindTexture(GL_TEXTURE_2D, hdrTexture);
+            glGenTextures(1, &hdrTexture0);
+            glBindTexture(GL_TEXTURE_2D, hdrTexture0);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -218,6 +211,81 @@ int main()
         }
 
     }
+    unsigned int hdrTexture1;
+    {
+        stbi_set_flip_vertically_on_load(true);
+        int width, height, nrComponents;
+        float* data = stbi_loadf("resources/textures/hdr/Tokyo_BigSight_3k.hdr", &width, &height, &nrComponents, 0);
+        if (data)
+        {
+            glGenTextures(1, &hdrTexture1);
+            glBindTexture(GL_TEXTURE_2D, hdrTexture1);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Failed to load HDR image." << std::endl;
+        }
+
+    }
+
+    unsigned int hdrTexture2;
+    {
+        stbi_set_flip_vertically_on_load(true);
+        int width, height, nrComponents;
+        float* data = stbi_loadf("resources/textures/hdr/WinterForest_Ref.hdr", &width, &height, &nrComponents, 0);
+        if (data)
+        {
+            glGenTextures(1, &hdrTexture2);
+            glBindTexture(GL_TEXTURE_2D, hdrTexture2);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Failed to load HDR image." << std::endl;
+        }
+
+    }
+
+    unsigned int hdrTexture3;
+    {
+        stbi_set_flip_vertically_on_load(true);
+        int width, height, nrComponents;
+        float* data = stbi_loadf("resources/textures/hdr/Theatre-Center_2k.hdr", &width, &height, &nrComponents, 0);
+        if (data)
+        {
+            glGenTextures(1, &hdrTexture3);
+            glBindTexture(GL_TEXTURE_2D, hdrTexture3);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Failed to load HDR image." << std::endl;
+        }
+
+    }
+
     //光源
     const GLuint NR_LIGHTS = 1;
     glm::vec3 lightPositions[] = {
@@ -467,6 +535,8 @@ int main()
             PBRShader.setFloat("ao", 1.0f);
             PBRShader.setMat4("projection", projection);
             PBRShader.setInt("irradianceMap", 5);
+            PBRShader.setInt("prefilterMap", 6);
+            PBRShader.setInt("brdfLUT", 7);
         }
         Shader PBRTextureShader("Shaders/PBRTexture.vert", "Shaders/PBRTexture.frag");
         {
@@ -512,8 +582,114 @@ int main()
 
 
 #pragma endregion
-        //预渲染到立方体贴图
+        
+#pragma region 渲染循环
+    while (!glfwWindowShouldClose(window))
+    {
+        //查询事件
+        glfwPollEvents();
+
+        //处理输入
+        processInput(window);
+#pragma region ImGUIFrame
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
+
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        
+        //绑定变量到GUI
+        static glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
+        static bool isSkybox = true;
+        static float rotModel = -90.0f;
+        static float floorY = -2.0f;
+        static float mipLevel = 0;
+        static int hdrEnv = 0;
         {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("Set");                          // Create a window called "Hello, world!" and append into it.
+
+            //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            //ImGui::Checkbox("Another Window", &show_another_window);
+
+            ImGui::SliderFloat("rotModel", &rotModel, 0.0f, -90.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderFloat("floorY", &floorY, -5.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+
+            ImGui::DragFloat3("lightPos", &lightPos[0],0.1f);
+            //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+            
+            ImGui::Checkbox("Skybox", &isSkybox);
+            ImGui::SliderFloat("mipLevel", &mipLevel, 0.0f, 4.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+
+            //if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+            //    counter++;
+            //ImGui::SameLine();
+            //ImGui::Text("counter = %d", counter);
+
+            ImGui::RadioButton("HdrEnv0", &hdrEnv,0);
+            ImGui::RadioButton("HdrEnv1", &hdrEnv, 1);
+            ImGui::RadioButton("HdrEnv2", &hdrEnv, 2);
+            ImGui::RadioButton("HdrEnv3", &hdrEnv, 3);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+        
+        // 3. Show another simple window.
+        if (show_another_window)
+        {
+            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from another window!");
+            if (ImGui::Button("Close Me"))
+                show_another_window = false;
+            ImGui::End();
+        }
+#pragma endregion
+
+
+#pragma region 摄像机VP矩阵
+        //设置观察矩阵
+        glm::mat4 view;
+        view = camera.GetViewMatrix();
+
+
+#pragma endregion
+#pragma region 光源VP矩阵
+
+
+
+
+#pragma endregion
+        //预渲染
+                //预渲染到立方体贴图
+        unsigned int hdrTexture;
+        switch (hdrEnv) {
+        case 0:
+            hdrTexture = hdrTexture0;
+            break;
+        case 1:
+            hdrTexture = hdrTexture1;
+            break;
+        case 2:
+            hdrTexture = hdrTexture2;
+            break;
+        case 3:
+            hdrTexture = hdrTexture3;
+            break;
+
+        }
+        if(oldHdrEnv!=hdrEnv)
+        {
+            oldHdrEnv = hdrEnv;
+            
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
             glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
             glm::mat4 captureViews[] =
@@ -612,87 +788,6 @@ int main()
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
-        
-#pragma region 渲染循环
-    while (!glfwWindowShouldClose(window))
-    {
-        //查询事件
-        glfwPollEvents();
-
-        //处理输入
-        processInput(window);
-#pragma region ImGUIFrame
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-        
-        //绑定变量到GUI
-        static glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
-        static bool isSkybox = true;
-        static float rotModel = -90.0f;
-        static float floorY = -2.0f;
-        static float mipLevel = 0;
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Set");                          // Create a window called "Hello, world!" and append into it.
-
-            //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            //ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("rotModel", &rotModel, 0.0f, -90.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::SliderFloat("floorY", &floorY, -5.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-
-            ImGui::DragFloat3("lightPos", &lightPos[0],0.1f);
-            //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-            
-            ImGui::Checkbox("Skybox", &isSkybox);
-            ImGui::SliderFloat("mipLevel", &mipLevel, 0.0f, 4.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-
-            //if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            //    counter++;
-            //ImGui::SameLine();
-            //ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::End();
-        }
-        
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-#pragma endregion
-
-
-#pragma region 摄像机VP矩阵
-        //设置观察矩阵
-        glm::mat4 view;
-        view = camera.GetViewMatrix();
-
-
-#pragma endregion
-#pragma region 光源VP矩阵
-
-
-
-
-#pragma endregion
-
         //渲染场景
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
@@ -740,8 +835,6 @@ int main()
             PBRShader.setFloat("metallic", (float)row / (float)nrRows);
             for (int col = 0; col < nrColumns; ++col)
             {
-                if (col == nrColumns / 2 && row == nrRows / 2)
-                    continue;
                 // we clamp the roughness to 0.05 - 1.0 as perfectly smooth surfaces (roughness of 0.0) tend to look a bit off
                 // on direct lighting.
                 PBRShader.setFloat("roughness", glm::clamp((float)col / (float)nrColumns, 0.05f, 1.0f));
@@ -784,8 +877,16 @@ int main()
         glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
 
 
-        renderSphere();
+        //renderSphere();
 
+        //渲染手枪模型
+        model = glm::mat4(0.05f);
+        model = glm::translate(model, glm::vec3(100.0f, 0.0f, 80.0f));
+        model = glm::rotate(model,-PI/2.0f,glm::vec3(1.0f,0.0f,0.0f));
+
+        PBRTextureShader.setMat4("model", model);
+
+        gun.Draw(PBRTextureShader);
 
         //渲染天空盒
         if (isSkybox) {
@@ -800,7 +901,7 @@ int main()
             skyboxShader.setFloat("mipLevel", mipLevel);
             glBindVertexArray(skyboxVAO);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
             glDrawArrays(GL_TRIANGLES, 0, 36);
             glDepthMask(GL_TRUE);
 
@@ -1277,7 +1378,6 @@ void renderSphere()
 
         const unsigned int X_SEGMENTS = 64;
         const unsigned int Y_SEGMENTS = 64;
-        const float PI = 3.14159265359f;
         for (unsigned int x = 0; x <= X_SEGMENTS; ++x)
         {
             for (unsigned int y = 0; y <= Y_SEGMENTS; ++y)
